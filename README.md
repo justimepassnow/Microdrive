@@ -69,6 +69,7 @@ Connect these 4 wires from the Pico to the programming header on the μDrive boa
 1. Install **VS Code** and add the **PlatformIO** extension.
 2. Install **Python** on your PC.
 3. Open a terminal and install the flashing tool by running: `pip install pyocd`
+   * *(**Windows Users:** If `pyocd` fails to detect your probe later, Windows likely installed the wrong default driver. Download the free [Zadig tool](https://zadig.akeo.ie/), select "Picoprobe CMSIS-DAP" from the dropdown, and replace the driver with **WinUSB**).*
 
 **Step 4: Open and Flash!**
 1. Clone this repository and open the `MicroDrive` folder in VS Code.
