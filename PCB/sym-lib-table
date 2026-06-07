@@ -1,0 +1,7 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "mm32g0001a1t")(type "KiCad")(uri "${KIPRJMOD}/mm32g0001a1t.kicad_sym")(options "")(descr ""))
+  (lib (name "sl7533-3")(type "KiCad")(uri "${KIPRJMOD}/sl7533-3.kicad_sym")(options "")(descr ""))
+  (lib (name "BDR6121H")(type "KiCad")(uri "${KIPRJMOD}/BDR6121H.kicad_sym")(options "")(descr ""))
+  (lib (name "AS5600")(type "KiCad")(uri "${KIPRJMOD}/AS5600.kicad_sym")(options "")(descr ""))
+)
