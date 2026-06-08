@@ -7406,6 +7406,18 @@
 			(justify left bottom mirror)
 		)
 	)
+	(gr_text "μDrive_1.0\n"
+		(at 75.5 33.6 0)
+		(layer "B.SilkS")
+		(uuid "ee40c511-96e3-4c5d-bb19-e367470f5286")
+		(effects
+			(font
+				(size 1.5 1.5)
+				(thickness 0.2)
+			)
+			(justify left bottom mirror)
+		)
+	)
 	(segment
 		(start 73.34 44.0815)
 		(end 74.4985 44.0815)
