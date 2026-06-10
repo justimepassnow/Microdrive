@@ -4,4 +4,5 @@
   (lib (name "sl7533-3")(type "KiCad")(uri "${KIPRJMOD}/sl7533-3.kicad_sym")(options "")(descr ""))
   (lib (name "BDR6121H")(type "KiCad")(uri "${KIPRJMOD}/BDR6121H.kicad_sym")(options "")(descr ""))
   (lib (name "AS5600")(type "KiCad")(uri "${KIPRJMOD}/AS5600.kicad_sym")(options "")(descr ""))
+  (lib (name "CP2119L")(type "KiCad")(uri "${KIPRJMOD}/CP2119L.kicad_sym")(options "")(descr ""))
 )
