@@ -1,7 +1,7 @@
 """
-config.py — Comprehensive Feature & Configuration Sweep Test for Smart Servo
+config.py — Comprehensive Feature & Configuration Sweep Test for Microdrive
 
-This script verifies all features of the smart servo:
+This script verifies all features of the microdrive:
 1. Scanning for the servo on the single-wire half-duplex bus.
 2. Querying the persistent non-volatile configuration (READ_CONFIG).
 3. Writing a temporary/persistent configuration to lower the minimum angle limit to 20°
@@ -14,7 +14,7 @@ This script verifies all features of the smart servo:
 
 from machine import UART, Pin
 import time
-from smart_servo import ServoBus
+from microdrive import ServoBus
 
 # ─── 1. Initialize UART1 on Pi Pico ──────────────────────────────────────
 print("Initializing UART1 on GP4 (TX) and GP5 (RX)...")

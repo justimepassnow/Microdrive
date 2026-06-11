@@ -1,5 +1,5 @@
 """
-smart_servo.py — MicroPython driver for Smart Servo (MM32 firmware)
+microdrive.py — MicroPython driver for Microdrive (MM32 firmware)
 
 Communicates over a half-duplex single-wire UART bus at 250000 baud.
 Protocol: binary packets with 0xFF 0xFF header, ID, length, instruction,
@@ -9,7 +9,7 @@ Supports daisy-chained servos on the same bus, each addressed by a unique ID.
 
 Usage:
     from machine import UART, Pin
-    from smart_servo import ServoBus
+    from microdrive import ServoBus
 
     bus = ServoBus(UART(1, 250000), dir_pin=Pin(4, Pin.OUT))
     servo = bus.servo(0)
@@ -227,7 +227,7 @@ def _pack_u16_le(val):
 
 class ServoBus:
     """
-    Manages the shared half-duplex UART bus for one or more Smart Servos.
+    Manages the shared half-duplex UART bus for one or more Microdrives.
 
     Parameters
     ----------
@@ -414,7 +414,7 @@ class ServoBus:
 
 class Servo:
     """
-    High-level interface to a single Smart Servo on the bus.
+    High-level interface to a single Microdrive on the bus.
 
     Created via ``bus.servo(id)`` — do not instantiate directly.
     """

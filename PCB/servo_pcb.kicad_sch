@@ -1947,7 +1947,7 @@
 		)
 		(uuid f80fa8fc-3f24-45d8-98d8-ec2a1035b6a9)
 	)
-	(text "Motor Driver:supports 2 drivers\njust need to use appropriate jumpers\n1.BDR6121H : 7.5v 3A\n2.CP2119L: 18v 5A \n"
+	(text "Motor Driver:CP2119L: 18v 5A \n"
 		(exclude_from_sim no)
 		(at 57.15 73.406 0)
 		(effects

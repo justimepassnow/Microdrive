@@ -2,7 +2,7 @@ import sys
 import json
 import select
 from machine import UART, Pin
-from smart_servo import ServoBus
+from microdrive import ServoBus
 
 # Configure UART for the Servo Bus. 
 uart = UART(1, baudrate=250000, tx=Pin(4), rx=Pin(5))
@@ -14,7 +14,7 @@ def send_response(data):
 def log_msg(msg):
     send_response({"res": "log", "msg": msg})
 
-log_msg("Smart Servo Proxy Started.")
+log_msg("Microdrive Proxy Started.")
 
 while True:
     line = sys.stdin.readline().strip()

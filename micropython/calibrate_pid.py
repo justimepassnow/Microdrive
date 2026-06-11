@@ -1,5 +1,5 @@
 """
-calibrate_pid.py — Automated PID Calibration Utility for Smart Servo
+calibrate_pid.py — Automated PID Calibration Utility for Microdrive
 
 This script uses a Gradient Ascent Step Response auto-tuner algorithm:
 1. Scans the UART bus for connected servos.
@@ -15,7 +15,7 @@ from machine import UART, Pin
 import time
 import sys
 import uselect
-from smart_servo import ServoBus
+from microdrive import ServoBus
 
 # ─── 1. Initialize UART1 on Pi Pico ──────────────────────────────────────
 print("Initializing UART1 on GP4 (TX) and GP5 (RX)...")

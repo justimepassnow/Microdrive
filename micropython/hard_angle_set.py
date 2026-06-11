@@ -1,5 +1,5 @@
 """
-hard_angle_set.py — Automatic Hard Limit Calibration for Smart Servo
+hard_angle_set.py — Automatic Hard Limit Calibration for Microdrive
 
 This script automatically calibrates the physical hard_min and hard_max angles:
 1. Temporarily broadens the software limits to allow full physical sweep.
@@ -16,7 +16,7 @@ This script automatically calibrates the physical hard_min and hard_max angles:
 
 from machine import UART, Pin
 import time
-from smart_servo import ServoBus
+from microdrive import ServoBus
 
 # ─── 1. Initialize UART1 on Pi Pico ──────────────────────────────────────
 print("Initializing UART1 on GP4 (TX) and GP5 (RX)...")

@@ -1,4 +1,4 @@
-# μDrive (MicroDrive)
+# μDrive (Microdrive)
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Hardware License](https://img.shields.io/badge/Hardware_License-CERN--OHL--P--V2-blue)
@@ -17,14 +17,36 @@
 
 ---
 
+## 📖 Documentation
+
+A comprehensive documentation suite is available in the [docs](docs/) directory:
+* **[Hardware Reference](docs/hardware.md):** Detailed specs of both board variants, pin mappings, and BOM.
+* **[Firmware Guide](docs/firmware.md):** Protocol specifications, PID loop details, and compilation/flashing guide.
+* **[Getting Started](docs/getting-started.md):** Step-by-step instructions from zero to a running servo network.
+* **[MicroPython API Reference](docs/api-reference.md):** Comprehensive reference for the library, utility scripts, and wiring.
+
+---
+
 ## 🛠️ Hardware Specifications
 
-* **Microcontroller:** MindMotion MM32G0001 (32-bit Cortex-M0)
-* **Motor Driver:** BDR6121H (Up to 7.5V operating voltage, 1.55A continuous / 3A peak)
-* **Power:** The onboard 3.3V logic regulator can handle inputs up to 24V. *(Note: Always verify your specific motor driver's voltage limits before applying main motor power).*
+μDrive is available in **two PCB variants** sharing the same MCU and logic, but using different motor drivers:
+
+| Feature | Generic Servo Board | MG996 Drop-in Board |
+|---|---|---|
+| **Motor Driver** | CP2119 | BDR6121H |
+| **Form Factor** | Generic — attach to any DC motor | Drop-in replacement for MG996R servo |
+| **Operating Voltage** | Up to 18V max | Up to 7.5V max |
+| **Current Rating** | 5A continuous | 1.5A continuous / 3A peak |
+| **PCB Files** | [servo_pcb](PCB/) | [servo_pcb_mg99x](PCB/) |
+
+### Common Architecture (Both Boards)
+* **Microcontroller:** MindMotion MM32G0001 (32-bit Cortex-M0, 48MHz, 16KB Flash, 2KB RAM)
+* **Current Sensor:** INA180A2 (current sense amplifier) with a 0.01Ω shunt resistor for overcurrent protection
+* **Power:** Onboard SL7533-3 3.3V logic regulator (supports input up to 24V)
 * **Feedback Inputs:**
   * **Analog:** Standard potentiometer support (shared with the SDA pin).
-  * **Digital (I2C):** 4-pad footprint (3.3v, SCL, SDA, GND) for external I2C magnetic encoders like the AS5600 *(Hardware ready, software implementation planned).*
+  * **Digital (I2C):** 4-pad footprint (3.3V, SCL, SDA, GND) for external I2C magnetic encoders like the AS5600.
+* **Communication:** Half-duplex, single-wire UART on PA12 (open-drain), 250000 baud, 8N1.
 
 ---
 
@@ -72,7 +94,7 @@ Connect these 4 wires from the Pico to the programming header on the μDrive boa
    * *(**Windows Users:** If `pyocd` fails to detect your probe later, Windows likely installed the wrong default driver. Download the free [Zadig tool](https://zadig.akeo.ie/), select "Picoprobe CMSIS-DAP" from the dropdown, and replace the driver with **WinUSB**).*
 
 **Step 4: Open and Flash!**
-1. Clone this repository and open the `MicroDrive` folder in VS Code.
+1. Clone this repository and open the `Microdrive` folder in VS Code.
 2. Click the PlatformIO **Upload** button (the small `→` arrow at the bottom of the screen). PlatformIO will automatically compile the code and trigger `pyocd` to flash it onto the MM32G0001!
 
 ### 2. Setting Up the Master MCU (Drivers)
@@ -92,7 +114,7 @@ To easily tune and monitor your servo network from your computer, you can run th
 
 ## 🚧 Known Issues & Roadmap
 
-MicroDrive is actively under development. Current focus areas include:
+Microdrive is actively under development. Current focus areas include:
 
 * **🐛 EMI Stability:** The board occasionally stops responding to commands during massive current spikes. This is likely due to electromagnetic interference (EMI) crashing the MCU or bus. Hardware/software filtering improvements are being investigated.
 * **🚀 Better I2C Encoder Support:** Writing the software drivers to fully utilize the AS5600 footprint.

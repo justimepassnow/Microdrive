@@ -947,7 +947,7 @@ int main(void) {
     // 2. Initialize Single-Wire Half-Duplex USART1 at 250000 Baud
     uart_init();
 #if DEBUG_LOG
-    uart_print("\n--- Smart Servo Overhauled Firmware Init ---\n");
+    uart_print("\n--- Microdrive Firmware Init ---\n");
 #endif
 
     // 3. Load or initialize Flash Persistent Parameters

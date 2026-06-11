@@ -1,8 +1,8 @@
 """
-example.py — RP2040-Zero Quick-Start & Configuration Utility for Smart Servo
+example.py — RP2040-Zero Quick-Start & Configuration Utility for Microdrive
 
 This script demonstrates how to set up, calibrate, scan, and configure 
-an unconfigured Smart Servo (factory default ID 0) using a Waveshare RP2040-Zero.
+an unconfigured Microdrive (factory default ID 0) using a Waveshare RP2040-Zero.
 
 ===============================================================================
                        CONNECTION & WIRING GUIDE
@@ -15,28 +15,25 @@ an unconfigured Smart Servo (factory default ID 0) using a Waveshare RP2040-Zero
       Motors draw high currents that will damage or reset the RP2040-Zero.)
 
 2. HALF-DUPLEX SINGLE-WIRE DATA BUS:
-   - RP2040-Zero Pin '0' (GP0 / TX0) ───┬─── Servo Bus Data Line (PA12 on MM32 board)
-   - RP2040-Zero Pin '1' (GP1 / RX0) ───┘
-   - Connect a 4.7kΩ (or 10kΩ) Pull-Up Resistor from the combined Data Line to
-     RP2040-Zero '3V3' pin.
-     *Note: Since the MM32 board is configured in Open-Drain mode (AF_OD), 
-     a physical pull-up resistor is REQUIRED to pull the data line high.*
+   - RP2040-Zero Pin '0' (GP0 / TX0) ───[1kΩ Resistor]───┐
+   - RP2040-Zero Pin '1' (GP1 / RX0) ───────────────────┴─── Servo Bus Data Line (PA12 on MM32 board)
+   - Note: The MM32 board already contains a 10kΩ pull-up resistor on the Data Line.
+     An external pull-up resistor is NOT required.
 
                  RP2040-ZERO WIRING SCHEMA:
                      
       Waveshare RP2040-Zero
       ┌─────────────────────┐
-      │     Pin '0' (GP0)   ├───────┬─────────────────── To Servo Data Line
-      │     Pin '1' (GP1)   ├───────┤                    (PA12 on MM32 Board)
-      │                     │       │
-      │     Pin '3V3'       ├─[4.7k]┘ (Pull-Up Resistor)
+      │     Pin '0' (GP0)   ├─[1kΩ]─┐
+      │     Pin '1' (GP1)   ├───────┴─────────────────── To Servo Data Line
+      │                     │                            (PA12 on MM32 Board)
       │     Pin 'GND'       ├─────────────────────────── To Servo GND & Power Supply GND
       └─────────────────────┘
 """
 
 from machine import UART, Pin
 import time
-from smart_servo import ServoBus
+from microdrive import ServoBus
 
 # ─── 1. Initialize UART1 on Pi Pico ──────────────────────────────────────
 # On Pi Pico, GPIO 4 and GPIO 5 are used for TX and RX.
@@ -53,8 +50,8 @@ if not found:
     print("❌ No servos detected!")
     print("Please verify your connections:")
     print("  1. Is the servo powered by a suitable external power supply?")
-    print("  2. Are Pi Pico pins GP4 and GP5 tied together and connected to the servo data line?")
-    print("  3. Do you have a physical pull-up resistor (4.7k-10k) connected to 3V3?")
+    print("  2. Are Pi Pico pins GP4 and GP5 connected correctly (GP5 to data line, GP4 to GP5 via 1kΩ resistor)?")
+    print("  3. Does the data bus have a pull-up resistor (onboard 10kΩ on the μDrive board, or external)?")
     print("  4. Are the Pi Pico GND and External Supply GND tied together?")
     import sys
     sys.exit()

@@ -1,5 +1,5 @@
 """
-manual_calibrate.py — Manual Multi-Point Calibration Utility for Smart Servo
+manual_calibrate.py — Manual Multi-Point Calibration Utility for Microdrive
 
 This script performs a precise manual calibration of the potentiometer:
 1. Temporarily sets the servo's scale to 1:1 (zero_adc=0, adc_per_360=360) in RAM.
@@ -19,7 +19,7 @@ try:
     import select
 except ImportError:
     import uselect as select
-from smart_servo import ServoBus
+from microdrive import ServoBus
 
 def wait_for_enter_with_live_adc(servo, prompt_text):
     print(prompt_text)

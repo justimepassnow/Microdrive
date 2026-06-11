@@ -1,6 +1,6 @@
-# Smart Servo — MicroPython Driver
+# Microdrive — MicroPython Driver
 
-A lightweight MicroPython library for controlling Smart Servos running the MM32 firmware over a half-duplex single-wire UART bus.
+A lightweight MicroPython library for controlling Microdrives running the MM32 firmware over a half-duplex single-wire UART bus.
 
 ## Features
 
@@ -16,33 +16,41 @@ A lightweight MicroPython library for controlling Smart Servos running the MM32 
 
 The servo firmware uses **half-duplex single-wire UART** on PA12 (open-drain) at **250000 baud, 8N1**.
 
-### Minimal (Single-Wire, No Transceiver)
+### Single-Wire Bus Layout
+
+#### Option A: For boards with open-drain UART support (e.g., ESP32)
+If your microcontroller supports native half-duplex UART or allows configuring the TX pin as open-drain, you can connect the TX pin directly to the data bus. No external pull-up is needed because the μDrive PCB already includes an onboard 10kΩ pull-up resistor on the data bus:
 
 ```
-MicroPython MCU                    Smart Servo
-┌──────────┐                       ┌──────────┐
-│       TX ├───────────────────────┤ Data Bus │
-│          │        1k–10kΩ        │          │
-│      3V3 ├───────┤ PULL-UP ├─────┤          │
-│      GND ├───────────────────────┤ GND      │
-└──────────┘                       └──────────┘
+ESP32 (Open-Drain TX/RX)               μDrive
+┌──────────────────┐                   ┌──────────────────┐
+│  TX/RX (Pin 4)   ├───────────────────┤ Data Bus         │
+│                  │                   │ (Onboard 10kΩ    │
+│             GND  ├───────────────────┤  pull-up to 3.3V)│
+└──────────────────┘                   └──────────────────┘
 ```
 
-> **Tip:** Configure the UART TX pin as **open-drain** if your MCU supports it (e.g., ESP32's `UART(1, tx=Pin(4), ... )` with an external pull-up).
-
-### With RS-485 Transceiver
+#### Option B: For boards without open-drain UART support (e.g., Raspberry Pi Pico / RP2040)
+If your board does not support open-drain UART, connect the RX pin directly to the bus, and connect the TX pin to the RX pin/bus through a **1kΩ isolation resistor** to prevent short circuits when the MCU TX drives the pin high:
 
 ```
-MCU TX  → DI
-MCU RX  → RO
-MCU GPx → DE+RE  (dir_pin — HIGH to transmit, LOW to receive)
+MicroPython MCU (Pico)                 μDrive
+┌──────────────────┐                   ┌──────────────────┐
+│         GP4 (TX) ├────[ 1kΩ Res ]    │                  │
+│                  │         │         │                  │
+│         GP5 (RX) ├─────────┴─────────┤ Data Bus         │
+│                  │                   │ (Onboard 10kΩ    │
+│             GND  ├───────────────────┤  pull-up to 3.3V)│
+└──────────────────┘                   └──────────────────┘
 ```
+
+> **Tip:** The 1kΩ resistor acts as isolation. When the Pico transmits a logic low, it pulls the data line down through the resistor. When the servo transmits, the resistor protects the Pico's TX pin if it remains driven high. Since the μDrive board has an onboard 10kΩ pull-up on the Data Bus, no external pull-up resistor is required.
 
 ## Quick Start
 
 ```python
 from machine import UART, Pin
-from smart_servo import ServoBus
+from microdrive import ServoBus
 
 # Create bus (adjust pins for your board)
 uart = UART(1, baudrate=250000, tx=Pin(4))

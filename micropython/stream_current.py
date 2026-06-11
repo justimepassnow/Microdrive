@@ -1,6 +1,6 @@
 from machine import UART, Pin
 import time
-from smart_servo import ServoBus
+from microdrive import ServoBus
 
 def stream_live_current():
     # 1. Initialize UART1 on Pi Pico (Just like the calibration script)
