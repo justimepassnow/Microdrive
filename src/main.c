@@ -13,7 +13,7 @@
 uint32_t SystemCoreClock = 48000000U;
 
 // Logging Configuration (Set to 0 for silent multi-servo production daisy-chaining)
-#define DEBUG_LOG 1
+#define DEBUG_LOG 0
 
 // Protocol packet parsing states
 typedef enum {
@@ -857,7 +857,7 @@ static inline void one_ms_task(uint32_t arr_period) {
         yield_active = 1;
     } else {
         // Force is safe. Slowly recover the allowed PWM to prevent oscillation.
-        pwm_clamp += 5;
+        pwm_clamp += 10;
         if (pwm_clamp > (int32_t)arr_period) pwm_clamp = arr_period;
         if (pwm_clamp == (int32_t)arr_period) yield_active = 0;
     }
@@ -1034,7 +1034,17 @@ int main(void) {
     // 13. Enable 1ms SysTick timekeeping interrupt and PID Loop
     SysTick_Config(SystemCoreClock / 1000);
 
+    // 14. Enable Independent Watchdog (IWDG) — ~500ms timeout, auto-resets MCU if main loop hangs
+    IWDG->KR  = 0x5555;   // Unlock prescaler and reload registers
+    IWDG->PR  = 4;         // Prescaler /64: 40kHz LSI / 64 = 625 Hz
+    IWDG->RLR = 312;       // Reload value: 312 / 625 Hz ≈ 500ms timeout
+    while (IWDG->SR);      // Wait for registers to sync
+    IWDG->KR  = 0xAAAA;   // Initial reload
+    IWDG->KR  = 0xCCCC;   // Start IWDG (cannot be stopped once started)
+
     while (1) {
+        // Pet the watchdog — if we ever fail to reach this line within 500ms, MCU hard-resets
+        IWDG->KR = 0xAAAA;
         // A. Software System Reset Trigger (Debounced reset button on PA0)
         if (GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_0) == Bit_RESET) {
 #if DEBUG_LOG
