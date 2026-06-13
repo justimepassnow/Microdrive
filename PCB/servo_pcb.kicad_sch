@@ -5460,7 +5460,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "Diode_SMD:D_2512_6332Metric_Pad1.52x3.35mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_2512_6332Metric_Pad1.40x3.35mm_HandSolder"
 			(at 141.478 40.64 90)
 			(effects
 				(font

@@ -2,6 +2,7 @@
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Hardware License](https://img.shields.io/badge/Hardware_License-CERN--OHL--P--V2-blue)
+[![OSHWA Certified](https://img.shields.io/badge/OSHWA-IN000092-green.svg)](https://certification.oshwa.org/in000092.html)
 
 **μDrive** is an open-source hardware and software project designed to convert any standard "dumb" DC motor into a smart, closed-loop servo motor. By retrofitting a standard DC motor with an analog potentiometer or an I2C magnetic encoder, μDrive grants you precise control over position, velocity, and current.
 
@@ -10,7 +11,7 @@
 ## ✨ Features
 
 * **Universal DC Motor Support:** Works with standard DC brushed motors (within the limits of the onboard motor driver).
-* **Closed-Loop Control:** PID-based control over Motor Position, Velocity, and Current.
+* **Closed-Loop Control:** PID-based control over Motor Position, Velocity, and Torque.
 * **Single-Wire Communication:** Network multiple servos together using a half-duplex, single-wire UART interface.
 * **Web-Based Dashboard:** Includes a Svelte-based WebGUI utilizing the Web Serial API. Connect a master microcontroller to your PC via USB, and monitor/tune your servo network directly from your browser.
 * **High-Level API:** Control motors using high-level commands without worrying about register-level or bit-level operations.
@@ -122,10 +123,17 @@ Microdrive is actively under development. Current focus areas include:
 
 ---
 
+## 🤝 Contributing
+
+Contributions are welcome! Whether it's firmware, hardware, documentation, or the WebGUI — check out the [Contributing Guide](CONTRIBUTING.md) to get started. Found a bug or have an idea? [Open an issue](https://github.com/justimepassnow/Microdrive/issues).
+
+---
+
 ## ⚖️ License
 
-This project is fully open-source:
+This project is fully open-source and [OSHWA certified](https://certification.oshwa.org/in000092.html) (**UID: IN000092**):
 * The **Software/Firmware** is licensed under the [MIT License](LICENSE).
 * The **Hardware (PCBs/Schematics)** is licensed under the [CERN-OHL-P v2](LICENSE-HARDWARE.txt).
 
 You are free to build, modify, and integrate μDrive into your own projects (commercial or hobbyist).
+
