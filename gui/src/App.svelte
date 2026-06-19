@@ -8,11 +8,14 @@
     import ConfigPanel from './components/ConfigPanel.svelte';
     import TelemetryChart from './components/TelemetryChart.svelte';
     import ConsoleTerminal from './components/ConsoleTerminal.svelte';
+    import CalibrationWizard from './components/CalibrationWizard.svelte';
+    import StepTestPanel from './components/StepTestPanel.svelte';
 
     // Reactive Application State (Svelte 5 Runes)
     let isConnected = $state(false);
     let isConnecting = $state(false);
     let isScanning = $state(false);
+    let activeTab = $state('telemetry');
     
     let servos = $state([]);
     let activeServoId = $state(null);
@@ -192,6 +195,11 @@
         addLog('sys', `Activating Servo Node ID ${id}...`);
         sendCommand({ cmd: 'read_config', id });
         
+        if (id === 0) {
+            activeTab = 'calibration';
+            addLog('sys', `Servo Node ID 0 (factory default) selected. Redirecting to Configuration Wizard.`);
+        }
+        
         // Start live telemetry polling at 10Hz
         startPolling();
     }
@@ -288,15 +296,33 @@
 
         <!-- Main Telemetry & Control Panel -->
         <section class="glass-panel main-view">
-            <div class="header-row">
-                <h2>
-                    Live Telemetry 
-                    {#if activeServoId !== null}
-                        <span class="accent-text">ID {activeServoId}</span>
-                    {:else}
-                        <span class="text-muted">(--)</span>
-                    {/if}
-                </h2>
+            <div class="header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.8rem;">
+                <div class="tabs-header">
+                    <button class="tab-btn" class:active={activeTab === 'telemetry'} onclick={() => activeTab = 'telemetry'}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="9" y1="3" x2="9" y2="21"></line>
+                            <line x1="15" y1="3" x2="15" y2="21"></line>
+                            <line x1="3" y1="9" x2="21" y2="9"></line>
+                            <line x1="3" y1="15" x2="21" y2="15"></line>
+                        </svg>
+                        Telemetry & Control
+                    </button>
+                    <button class="tab-btn" class:active={activeTab === 'steptest'} onclick={() => activeTab = 'steptest'} disabled={activeServoId === null || !isConnected}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 3v18h18"></path>
+                            <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
+                        </svg>
+                        Step Response
+                    </button>
+                    <button class="tab-btn" class:active={activeTab === 'calibration'} onclick={() => activeTab = 'calibration'} disabled={activeServoId === null || !isConnected}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                        </svg>
+                        Configuration Wizard
+                    </button>
+                </div>
+
                 {#if activeServoId !== null && isConnected}
                     <div class="live-indicator">
                         <div class="dot" class:active={flashLiveDot}></div> 
@@ -305,71 +331,95 @@
                 {/if}
             </div>
 
-            <!-- Telemetry Cards -->
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <span class="label">Current Angle</span>
-                    <div class="value">{isConnected && activeServoId !== null ? telemetry.angle : 0}°</div>
-                </div>
-                
-                <div class="metric-card">
-                    <span class="label">Current Draw</span>
-                    <div class="value">
-                        {isConnected && activeServoId !== null ? telemetry.current_ma : 0} 
-                        <small>mA</small>
+            {#if activeTab === 'telemetry'}
+                <!-- Telemetry Cards -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <span class="label">Current Angle</span>
+                        <div class="value">{isConnected && activeServoId !== null ? telemetry.angle : 0}°</div>
                     </div>
-                </div>
-                
-                <div class="metric-card">
-                    <span class="label">Servo State</span>
-                    {#if isConnected && activeServoId !== null}
-                        {#if telemetry.is_holding}
-                            <div class="value state-val yielding">YIELDING</div>
-                        {:else if telemetry.is_moving}
-                            <div class="value state-val moving">MOVING</div>
+                    
+                    <div class="metric-card">
+                        <span class="label">Current Draw</span>
+                        <div class="value">
+                            {isConnected && activeServoId !== null ? telemetry.current_ma : 0} 
+                            <small>mA</small>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <span class="label">Servo State</span>
+                        {#if isConnected && activeServoId !== null}
+                            {#if telemetry.is_holding}
+                                <div class="value state-val yielding">YIELDING</div>
+                            {:else if telemetry.is_moving}
+                                <div class="value state-val moving">MOVING</div>
+                            {:else}
+                                <div class="value state-val">IDLE</div>
+                            {/if}
                         {:else}
                             <div class="value state-val">IDLE</div>
                         {/if}
-                    {:else}
-                        <div class="value state-val">IDLE</div>
-                    {/if}
+                    </div>
+                    
+                    <div class="metric-card">
+                        <span class="label">Health Status</span>
+                        {#if isConnected && activeServoId !== null && (telemetry.overcurrent || telemetry.stall)}
+                            <div class="value health-val fault">FAULT</div>
+                            <button class="btn small danger clear-fault-btn" onclick={clearFault}>
+                                Clear Fault
+                            </button>
+                        {:else}
+                            <div class="value health-val ok">OK</div>
+                        {/if}
+                    </div>
                 </div>
-                
-                <div class="metric-card">
-                    <span class="label">Health Status</span>
-                    {#if isConnected && activeServoId !== null && (telemetry.overcurrent || telemetry.stall)}
-                        <div class="value health-val fault">FAULT</div>
-                        <button class="btn small danger clear-fault-btn" onclick={clearFault}>
-                            Clear Fault
-                        </button>
-                    {:else}
-                        <div class="value health-val ok">OK</div>
-                    {/if}
-                </div>
-            </div>
 
-            <!-- Custom Interactive Dial Position Controller & Speedometer -->
-            <ControlDial 
-                {isConnected} 
-                actualAngle={telemetry.angle} 
-                bind:targetAngle 
-                bind:targetVelocity 
-                bind:targetCurrent
-                actualCurrent={telemetry.current_ma}
-                currentLimit={config?.current_limit || 500}
-                {isArmed}
-                onMove={sendMove} 
-                onDisarm={disarmMotor}
-            />
+                <!-- Custom Interactive Dial Position Controller & Speedometer -->
+                <ControlDial 
+                    {isConnected} 
+                    actualAngle={telemetry.angle} 
+                    bind:targetAngle 
+                    bind:targetVelocity 
+                    bind:targetCurrent
+                    actualCurrent={telemetry.current_ma}
+                    currentLimit={config?.current_limit || 500}
+                    {isArmed}
+                    onMove={sendMove} 
+                    onDisarm={disarmMotor}
+                />
 
-            <!-- Custom HTML Canvas rolling telemetry plot -->
-            {#if activeServoId !== null && isConnected}
-                <TelemetryChart 
-                    sample={{ 
-                        angle: telemetry.angle, 
-                        targetAngle: targetAngle, 
-                        current_ma: telemetry.current_ma 
-                    }} 
+                <!-- Custom HTML Canvas rolling telemetry plot -->
+                {#if activeServoId !== null && isConnected}
+                    <TelemetryChart 
+                        sample={{ 
+                            angle: telemetry.angle, 
+                            targetAngle: targetAngle, 
+                            current_ma: telemetry.current_ma 
+                        }} 
+                    />
+                {/if}
+            {:else if activeTab === 'steptest'}
+                <StepTestPanel 
+                    {isConnected}
+                    activeId={activeServoId}
+                    {telemetry}
+                    {config}
+                    {sendCommand}
+                    {addLog}
+                    bind:targetVelocity
+                    bind:targetCurrent
+                />
+            {:else if activeTab === 'calibration'}
+                <CalibrationWizard 
+                    {isConnected}
+                    activeId={activeServoId}
+                    {telemetry}
+                    {config}
+                    {sendCommand}
+                    onRead={() => sendCommand({ cmd: 'read_config', id: activeServoId })}
+                    onClose={() => activeTab = 'telemetry'}
+                    {addLog}
                 />
             {/if}
         </section>
@@ -395,18 +445,79 @@
 <style>
     .clear-fault-btn {
         margin-top: 0.4rem;
-        padding: 0.2rem 0.5rem;
+        padding: 0.3rem 0.8rem;
         font-size: 0.75rem;
-        border-radius: 4px;
+        border-radius: var(--radius-pill, 100px);
         width: 100%;
     }
     .state-val.yielding {
         color: var(--warning);
-        animation: textGlowPulseWarning 1.5s infinite;
+        animation: subtlePulseWarning 2s ease-in-out infinite;
     }
-    @keyframes textGlowPulseWarning {
-        0% { filter: drop-shadow(0 0 1px var(--warning-glow)); opacity: 1; }
-        50% { filter: drop-shadow(0 0 6px var(--warning-glow)); opacity: 0.85; }
-        100% { filter: drop-shadow(0 0 1px var(--warning-glow)); opacity: 1; }
+    @keyframes subtlePulseWarning {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.6; }
+    }
+
+    /* Tabs & Indicators styling */
+    .tabs-header {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        background: rgba(0, 0, 0, 0.22);
+        padding: 3.5px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .tab-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        font-family: var(--font);
+        font-size: 0.76rem;
+        font-weight: 600;
+        padding: 0.45rem 0.9rem;
+        border-radius: 8px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: all 0.2s ease;
+    }
+    .tab-btn:hover:not(:disabled) {
+        color: var(--text-main);
+        background: rgba(255, 255, 255, 0.04);
+    }
+    .tab-btn.active {
+        background: var(--accent);
+        color: #fff;
+        box-shadow: 0 2px 10px rgba(10, 132, 255, 0.25);
+    }
+    .tab-btn:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+    }
+    .live-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        background: rgba(255, 255, 255, 0.03);
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        user-select: none;
+    }
+    .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(48, 209, 88, 0.2);
+        transition: all 0.08s linear;
+    }
+    .dot.active {
+        background: var(--success);
+        box-shadow: 0 0 8px var(--success);
     }
 </style>

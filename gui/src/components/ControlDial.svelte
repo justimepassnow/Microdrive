@@ -196,9 +196,9 @@
 
 <div class="control-panel glass-subpanel">
     <div class="panel-header">
-        <h3>Position Control & Actuation</h3>
+        <h3>Position Control</h3>
         <span class="control-badge" class:active={isConnected}>
-            {isConnected ? 'Actuator Ready' : 'Standby'}
+            {isConnected ? 'Ready' : 'Standby'}
         </span>
     </div>
     
@@ -215,127 +215,95 @@
             ontouchstart={handleTouchStart}
         >
             <defs>
-                <!-- Neon Cyan Glow for Actual Angle -->
-                <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="5" result="blur" />
+                <filter id="glow-accent" x="-10%" y="-10%" width="120%" height="120%">
+                    <feGaussianBlur stdDeviation="2" result="blur" />
                     <feMerge>
                         <feMergeNode in="blur" />
                         <feMergeNode in="SourceGraphic" />
                     </feMerge>
                 </filter>
-                <!-- Neon Magenta Glow for Target Handle -->
-                <filter id="glow-magenta" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur stdDeviation="6" result="blur" />
+                <filter id="glow-target" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="2" result="blur" />
                     <feMerge>
                         <feMergeNode in="blur" />
                         <feMergeNode in="SourceGraphic" />
                     </feMerge>
                 </filter>
-                <!-- Central Cap Radial Shading -->
                 <radialGradient id="cap-grad" cx="50%" cy="50%" r="50%">
-                    <stop offset="70%" stop-color="#0b0e14" />
-                    <stop offset="95%" stop-color="#1a2230" />
-                    <stop offset="100%" stop-color="#2a364a" />
-                </radialGradient>
-                <!-- Outer Track Glow Shader -->
-                <radialGradient id="track-grad" cx="50%" cy="50%" r="50%">
-                    <stop offset="85%" stop-color="rgba(0,0,0,0)" />
-                    <stop offset="100%" stop-color="rgba(0, 240, 255, 0.05)" />
+                    <stop offset="60%" stop-color="#1c1c1e" />
+                    <stop offset="90%" stop-color="#2c2c2e" />
+                    <stop offset="100%" stop-color="#3a3a3c" />
                 </radialGradient>
             </defs>
 
-            <!-- Outer Tech Ring (Faint decorative boundary) -->
+            <!-- Outer decorative ring -->
             <circle cx="100" cy="100" r={R + 10} class="dial-outer-border" />
 
-            <!-- Circular Background Shading -->
-            <circle cx="100" cy="100" r={R} fill="url(#track-grad)" />
-
-            <!-- Dynamic Precision Angular Ticks -->
+            <!-- Tick marks -->
             {#each Array(24) as _, i}
                 {@const angle = i * 15}
                 <line 
-                    x1={getPolarX(angle, R - 8)} 
-                    y1={getPolarY(angle, R - 8)} 
-                    x2={getPolarX(angle, R - 2)} 
-                    y2={getPolarY(angle, R - 2)} 
+                    x1={getPolarX(angle, R - 6)} 
+                    y1={getPolarY(angle, R - 6)} 
+                    x2={getPolarX(angle, R - 1)} 
+                    y2={getPolarY(angle, R - 1)} 
                     class="dial-tick" 
                     class:major={i % 6 === 0}
-                    class:highlighted={isConnected && actualAngle >= angle}
                 />
             {/each}
 
-            <!-- Background Dial Ring Track -->
+            <!-- Track ring -->
             <circle cx="100" cy="100" r={R} class="dial-track" />
             
-            <!-- Swept Actual Angle Gradient Sector (Semi-transparent background path) -->
+            <!-- Actual angle arc -->
             {#if isConnected && actualAngle > 0}
-                <path 
-                    d="M {getPolarX(0, R)} {getPolarY(0, R)} A {R} {R} 0 {actualAngle > 180 ? 1 : 0} 1 {getPolarX(actualAngle, R)} {getPolarY(actualAngle, R)} L 100 100 Z"
-                    class="dial-swept-sector"
-                />
-                
-                <!-- Glowing Cyan Actual Angle Trail -->
                 <path 
                     d="M {getPolarX(0, R)} {getPolarY(0, R)} A {R} {R} 0 {actualAngle > 180 ? 1 : 0} 1 {getPolarX(actualAngle, R)} {getPolarY(actualAngle, R)}"
                     class="dial-fill-actual"
-                    filter="url(#glow-cyan)"
                 />
             {/if}
             
-            <!-- Central Cap Display Shield -->
-            <circle cx="100" cy="100" r="54" fill="url(#cap-grad)" stroke="rgba(255,255,255,0.06)" stroke-width="1.5" />
-            <circle cx="100" cy="100" r="48" class="dial-center-inset" />
+            <!-- Center cap -->
+            <circle cx="100" cy="100" r="52" fill="url(#cap-grad)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+            <circle cx="100" cy="100" r="46" class="dial-center-inset" />
 
-            <!-- Glowing Actual position needle pointer (Futuristic Tapered Polygon) -->
+            <!-- Needle -->
             {#if isConnected}
-                <!-- Dynamic shadow line underneath needle -->
-                <line 
-                    x1="100" 
-                    y1="100" 
-                    x2={getPolarX(actualAngle, R - 10)} 
-                    y2={getPolarY(actualAngle, R - 10)} 
-                    class="dial-needle-shadow"
-                />
-                <!-- Tapered Glowing Needle -->
                 <polygon 
                     points="
-                        {getPolarX(actualAngle - 5, 12)} {getPolarY(actualAngle - 5, 12)}, 
-                        {getPolarX(actualAngle, R - 12)} {getPolarY(actualAngle, R - 12)}, 
-                        {getPolarX(actualAngle + 5, 12)} {getPolarY(actualAngle + 5, 12)}
+                        {getPolarX(actualAngle - 4, 14)} {getPolarY(actualAngle - 4, 14)}, 
+                        {getPolarX(actualAngle, R - 14)} {getPolarY(actualAngle, R - 14)}, 
+                        {getPolarX(actualAngle + 4, 14)} {getPolarY(actualAngle + 4, 14)}
                     "
                     class="dial-needle-poly"
                     class:disarmed={!isArmed}
-                    filter={isArmed ? 'url(#glow-cyan)' : ''}
                 />
             {/if}
             
-            <!-- Target position handle (Neon Magenta circular node) -->
+            <!-- Target handle -->
             {#if isConnected}
-                <!-- Outer dashed halo of target handle -->
                 <circle 
                     cx={getPolarX(targetAngle, R)} 
                     cy={getPolarY(targetAngle, R)} 
-                    r="15" 
+                    r="12" 
                     class="dial-target-halo"
                     class:dragging={isDragging}
                 />
-                <!-- Interactive Handle -->
                 <circle 
                     cx={getPolarX(targetAngle, R)} 
                     cy={getPolarY(targetAngle, R)} 
-                    r="8" 
+                    r="7" 
                     class="dial-target-handle"
-                    filter="url(#glow-magenta)"
                 />
             {/if}
             
-            <!-- Numerical display inside the Central Cap -->
-            <text x="100" y="96" class="dial-text-val">{isConnected ? actualAngle : '--'}</text>
-            <text x="100" y="112" class="dial-text-deg">{isConnected ? 'DEG' : ''}</text>
-            <text x="100" y="125" class="dial-text-lbl">Actual Position</text>
+            <!-- Center text -->
+            <text x="100" y="95" class="dial-text-val">{isConnected ? actualAngle : '--'}</text>
+            <text x="100" y="110" class="dial-text-deg">{isConnected ? 'DEG' : ''}</text>
+            <text x="100" y="122" class="dial-text-lbl">Position</text>
         </svg>
 
-        <!-- Speedometer Gauge -->
+        <!-- Current Speedometer -->
         <svg 
             width="220" 
             height="220" 
@@ -344,43 +312,33 @@
             class:disabled={!isConnected}
         >
             <defs>
-                <!-- Neon Amber Glow for Actual Current -->
-                <filter id="glow-warning" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="5" result="blur" />
+                <filter id="glow-warning" x="-10%" y="-10%" width="120%" height="120%">
+                    <feGaussianBlur stdDeviation="2" result="blur" />
                     <feMerge>
                         <feMergeNode in="blur" />
                         <feMergeNode in="SourceGraphic" />
                     </feMerge>
                 </filter>
-                <!-- Central Cap Radial Shading -->
                 <radialGradient id="cap-grad-warning" cx="50%" cy="50%" r="50%">
-                    <stop offset="70%" stop-color="#0b0d10" />
-                    <stop offset="95%" stop-color="#241e17" />
-                    <stop offset="100%" stop-color="#3b2d1d" />
-                </radialGradient>
-                <!-- Outer Track Glow Shader -->
-                <radialGradient id="track-grad-warning" cx="50%" cy="50%" r="50%">
-                    <stop offset="85%" stop-color="rgba(0,0,0,0)" />
-                    <stop offset="100%" stop-color="rgba(245, 158, 11, 0.04)" />
+                    <stop offset="60%" stop-color="#1c1c1e" />
+                    <stop offset="90%" stop-color="#2a2520" />
+                    <stop offset="100%" stop-color="#3a3530" />
                 </radialGradient>
             </defs>
 
-            <!-- Outer Tech Ring -->
+            <!-- Outer decorative ring -->
             <circle cx="100" cy="100" r={R + 10} class="dial-outer-border" />
 
-            <!-- Circular Background Shading -->
-            <circle cx="100" cy="100" r={R} fill="url(#track-grad-warning)" />
-
-            <!-- Background Dial Ring Track (Swept) -->
+            <!-- Track arc -->
             <path d={trackPath} class="dial-track" />
 
-            <!-- Dynamic Precision Angular Ticks & Numerical Labels -->
+            <!-- Tick marks and labels -->
             {#each ticks as tick}
                 <line 
-                    x1={getPolarX(tick.angle, R - 8)} 
-                    y1={getPolarY(tick.angle, R - 8)} 
-                    x2={getPolarX(tick.angle, R - 2)} 
-                    y2={getPolarY(tick.angle, R - 2)} 
+                    x1={getPolarX(tick.angle, R - 6)} 
+                    y1={getPolarY(tick.angle, R - 6)} 
+                    x2={getPolarX(tick.angle, R - 1)} 
+                    y2={getPolarY(tick.angle, R - 1)} 
                     class="dial-tick speedometer-tick" 
                     class:major={tick.isMajor}
                     class:highlighted={isConnected && $smoothedCurrent >= tick.value}
@@ -388,8 +346,8 @@
                 />
                 {#if tick.isMajor}
                     <text
-                        x={getPolarX(tick.angle, R - 17)}
-                        y={getPolarY(tick.angle, R - 17)}
+                        x={getPolarX(tick.angle, R - 16)}
+                        y={getPolarY(tick.angle, R - 16)}
                         class="speedometer-tick-label"
                         class:highlighted={isConnected && $smoothedCurrent >= tick.value}
                         class:red-line={tick.value >= currentLimit}
@@ -399,71 +357,53 @@
                 {/if}
             {/each}
 
-            <!-- Danger/Red-line Zone Arc -->
+            <!-- Red-line danger zone -->
             {#if isConnected}
                 <path 
                     d={redLinePath}
                     class="speedometer-red-line"
-                    filter="url(#glow-magenta)"
                 />
             {/if}
             
-            <!-- Swept Actual Current Gradient Sector -->
+            <!-- Current arc -->
             {#if isConnected && $smoothedCurrent > 0}
-                <path 
-                    d="M {getPolarX(220, R)} {getPolarY(220, R)} A {R} {R} 0 {currentAngle - 220 > 180 ? 1 : 0} 1 {getPolarX(currentAngle, R)} {getPolarY(currentAngle, R)} L 100 100 Z"
-                    class="dial-swept-sector speedometer-swept-sector"
-                />
-                
-                <!-- Glowing Amber Actual Current Trail -->
                 <path 
                     d={activeArcPath}
                     class="dial-fill-actual speedometer-fill-actual"
-                    filter="url(#glow-warning)"
                 />
             {/if}
             
-            <!-- Central Cap Display Shield -->
-            <circle cx="100" cy="100" r="54" fill="url(#cap-grad-warning)" stroke="rgba(255,255,255,0.06)" stroke-width="1.5" />
-            <circle cx="100" cy="100" r="48" class="dial-center-inset speedometer-center-inset" />
+            <!-- Center cap -->
+            <circle cx="100" cy="100" r="52" fill="url(#cap-grad-warning)" stroke="rgba(255,255,255,0.08)" stroke-width="1" />
+            <circle cx="100" cy="100" r="46" class="dial-center-inset speedometer-center-inset" />
 
-            <!-- Glowing Actual position needle pointer -->
+            <!-- Needle -->
             {#if isConnected}
-                <!-- Dynamic shadow line underneath needle -->
-                <line 
-                    x1="100" 
-                    y1="100" 
-                    x2={getPolarX(currentAngle, R - 10)} 
-                    y2={getPolarY(currentAngle, R - 10)} 
-                    class="dial-needle-shadow"
-                />
-                <!-- Tapered Glowing Needle -->
                 <polygon 
                     points="
-                        {getPolarX(currentAngle - 5, 12)} {getPolarY(currentAngle - 5, 12)}, 
-                        {getPolarX(currentAngle, R - 12)} {getPolarY(currentAngle, R - 12)}, 
-                        {getPolarX(currentAngle + 5, 12)} {getPolarY(currentAngle + 5, 12)}
+                        {getPolarX(currentAngle - 4, 14)} {getPolarY(currentAngle - 4, 14)}, 
+                        {getPolarX(currentAngle, R - 14)} {getPolarY(currentAngle, R - 14)}, 
+                        {getPolarX(currentAngle + 4, 14)} {getPolarY(currentAngle + 4, 14)}
                     "
                     class="dial-needle-poly speedometer-needle"
-                    filter="url(#glow-warning)"
                 />
             {/if}
             
-            <!-- Numerical display inside the Central Cap -->
-            <text x="100" y="96" class="dial-text-val speedometer-text-val">{isConnected ? Math.round($smoothedCurrent) : '--'}</text>
+            <!-- Center text -->
+            <text x="100" y="95" class="dial-text-val speedometer-text-val">{isConnected ? Math.round($smoothedCurrent) : '--'}</text>
             <text 
                 x="100" 
-                y="112" 
+                y="110" 
                 class="dial-text-deg speedometer-text-ma" 
                 class:overlimit={$smoothedCurrent >= currentLimit}
             >
                 {isConnected ? 'mA' : ''}
             </text>
-            <text x="100" y="125" class="dial-text-lbl">Current Draw</text>
+            <text x="100" y="122" class="dial-text-lbl">Current Draw</text>
         </svg>
     </div>
 
-    <!-- Fine Tuning & Speed Configuration Controls -->
+    <!-- Slider Controls -->
     <div class="slider-controls">
         <div class="slider-group">
             <div class="label-row">
@@ -479,15 +419,14 @@
                     disabled={!isConnected}
                     oninput={() => sendThrottledMove(targetAngle)}
                 />
-                <!-- Progress bar behind track for premium slider look -->
                 <div class="slider-fill" style="width: {(targetAngle / 360) * 100}%"></div>
             </div>
         </div>
         
         <div class="slider-group">
             <div class="label-row">
-                <span class="label">Target Velocity</span>
-                <span class="value-highlight">{targetVelocity === 0 ? 'DEFAULT' : `${targetVelocity} °/s`}</span>
+                <span class="label">Velocity</span>
+                <span class="value-highlight">{targetVelocity === 0 ? 'Default' : `${targetVelocity} °/s`}</span>
             </div>
             <div class="slider-wrapper">
                 <input 
@@ -499,15 +438,15 @@
                     disabled={!isConnected}
                     oninput={() => sendThrottledMove(targetAngle)}
                 />
-                <div class="slider-fill" style="width: {(targetVelocity / 1000) * 100}%"></div>
+                <div class="slider-fill velocity-fill" style="width: {(targetVelocity / 1000) * 100}%"></div>
             </div>
-            <span class="hint-text">0 = Use Flash default speed limit</span>
+            <span class="hint-text">0 = flash default speed</span>
         </div>
 
         <div class="slider-group">
             <div class="label-row">
-                <span class="label">Dynamic Force Limit</span>
-                <span class="value-highlight">{targetCurrent === 0 ? 'DEFAULT' : `${targetCurrent} mA`}</span>
+                <span class="label">Force Limit</span>
+                <span class="value-highlight">{targetCurrent === 0 ? 'Default' : `${targetCurrent} mA`}</span>
             </div>
             <div class="slider-wrapper">
                 <input 
@@ -519,16 +458,16 @@
                     disabled={!isConnected}
                     oninput={() => sendThrottledMove(targetAngle)}
                 />
-                <div class="slider-fill" style="width: {targetCurrent === 0 ? 0 : (targetCurrent / currentLimit) * 100}%"></div>
+                <div class="slider-fill current-fill" style="width: {targetCurrent === 0 ? 0 : (targetCurrent / currentLimit) * 100}%"></div>
             </div>
-            <span class="hint-text">0 = Use Flash default limit</span>
+            <span class="hint-text">0 = flash default limit</span>
         </div>
 
         <div class="slider-group toggle-group">
             <div class="toggle-row">
-                <span class="label">Actuator Status</span>
+                <span class="label">Actuator</span>
                 <span class="status-indicator" class:armed={isArmed} class:disarmed={!isArmed}>
-                    {isConnected ? (isArmed ? 'Armed & Holding' : 'Disarmed / Free') : '--'}
+                    {isConnected ? (isArmed ? 'Armed' : 'Disarmed') : '—'}
                 </span>
             </div>
             <button 
@@ -537,17 +476,18 @@
                 disabled={!isConnected} 
                 onclick={toggleArm}
             >
-                {isArmed ? 'Disarm Motor' : 'Arm & Hold'}
+                {isArmed ? 'Disarm' : 'Arm & Hold'}
             </button>
         </div>
     </div>
 </div>
 
 <style>
+    /* ── Panel ─────────────────────────────────────────── */
     .glass-subpanel {
-        background: rgba(0, 0, 0, 0.18);
-        border: 1px solid rgba(255, 255, 255, 0.03);
-        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 16px;
         padding: 1.5rem;
         display: flex;
         flex-direction: column;
@@ -557,352 +497,290 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 1px solid rgba(255,255,255,0.03);
         padding-bottom: 0.8rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
     .panel-header h3 {
         margin-bottom: 0;
-        font-size: 0.95rem;
+        font-size: 0.85rem;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.08em;
+        color: var(--text-secondary, #a1a1a6);
+        font-weight: 600;
     }
     .control-badge {
-        font-size: 0.7rem;
-        font-weight: 700;
+        font-size: 0.68rem;
+        font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 1px;
-        background: rgba(255, 255, 255, 0.03);
+        letter-spacing: 0.06em;
+        background: rgba(255, 255, 255, 0.04);
         color: var(--text-muted);
-        padding: 0.2rem 0.5rem;
-        border-radius: 4px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        transition: all 0.25s ease;
     }
     .control-badge.active {
-        background: rgba(0, 240, 255, 0.1);
-        color: var(--accent);
-        border-color: var(--accent);
+        background: rgba(10, 132, 255, 0.1);
+        color: var(--accent, #0A84FF);
+        border-color: rgba(10, 132, 255, 0.2);
     }
 
+    /* ── Dial Container ────────────────────────────────── */
     .dial-container {
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 2.5rem;
+        gap: 2rem;
         user-select: none;
-        position: relative;
     }
     .servo-svg-dial {
         cursor: pointer;
+        transition: opacity 0.3s ease;
     }
     .servo-svg-dial.disabled {
         cursor: not-allowed;
         opacity: 0.2;
     }
-    
+    .speedometer-svg-dial {
+        cursor: default;
+    }
     .speedometer-svg-dial.disabled {
         opacity: 0.2;
     }
 
-    .speedometer-center-inset {
-        stroke: rgba(245, 158, 11, 0.03) !important;
-    }
-
-    .speedometer-tick {
-        stroke: rgba(255, 255, 255, 0.08);
-        transition: stroke 0.2s;
-    }
-    .speedometer-tick.highlighted {
-        stroke: var(--warning) !important;
-        filter: drop-shadow(0 0 1px var(--warning-glow));
-    }
-    .speedometer-tick.red-line {
-        stroke: rgba(255, 42, 95, 0.2);
-    }
-    .speedometer-tick.red-line.highlighted {
-        stroke: var(--magenta) !important;
-        filter: drop-shadow(0 0 1px var(--magenta-glow));
-    }
-
-    .speedometer-tick-label {
-        fill: rgba(255, 255, 255, 0.2);
-        font-size: 0.5rem;
-        font-weight: 700;
-        text-anchor: middle;
-        dominant-baseline: middle;
-        font-family: 'Outfit', monospace;
-    }
-    .speedometer-tick-label.highlighted {
-        fill: var(--warning);
-        text-shadow: 0 0 3px var(--warning-glow);
-    }
-    .speedometer-tick-label.red-line {
-        fill: rgba(255, 42, 95, 0.35);
-    }
-    .speedometer-tick-label.red-line.highlighted {
-        fill: var(--magenta);
-        text-shadow: 0 0 3px var(--magenta-glow);
-    }
-
-    .speedometer-red-line {
+    /* ── SVG Dial Elements ─────────────────────────────── */
+    .dial-outer-border {
         fill: none;
-        stroke: var(--magenta);
-        stroke-width: 2.5px;
-        stroke-linecap: round;
-        opacity: 0.65;
-    }
-
-    .speedometer-fill-actual {
-        stroke: var(--warning) !important;
-        stroke-width: 6px;
-        stroke-linecap: round;
-    }
-
-    .speedometer-swept-sector {
-        fill: rgba(245, 158, 11, 0.015);
-    }
-
-    .speedometer-needle {
-        fill: var(--warning) !important;
-        stroke: #fff;
+        stroke: rgba(255, 255, 255, 0.04);
         stroke-width: 0.5px;
     }
 
-    .speedometer-text-ma {
-        fill: var(--warning) !important;
-        transition: fill 0.2s;
-    }
-    .speedometer-text-ma.overlimit {
-        fill: var(--magenta) !important;
-        animation: textGlowPulseRed 1.2s infinite;
-    }
-    
-    .speedometer-text-val {
-        font-family: 'Outfit', monospace;
-        letter-spacing: -0.5px;
-    }
-
-    .dial-needle-poly.disarmed {
-        fill: var(--text-muted) !important;
-        stroke: rgba(255,255,255,0.15) !important;
-    }
-
-    .toggle-group {
-        border-top: 1px solid rgba(255, 255, 255, 0.04);
-        padding-top: 1.2rem;
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 0.5rem;
-    }
-    
-    .toggle-row {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-    }
-    
-    .status-indicator {
-        font-family: 'Outfit', sans-serif;
-        font-size: 0.85rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    .status-indicator.armed {
-        color: var(--accent);
-        text-shadow: 0 0 5px var(--accent-glow);
-    }
-    .status-indicator.disarmed {
-        color: var(--text-muted);
-    }
-    
-    .disarm-btn {
-        font-weight: 700;
-        font-size: 0.75rem;
-        padding: 0.45rem 1.2rem;
-        border-radius: 6px;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        color: var(--text-main);
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .disarm-btn:not(:disabled).armed:hover {
-        background: rgba(255, 42, 95, 0.1);
-        color: var(--magenta);
-        border-color: rgba(255, 42, 95, 0.3);
-        box-shadow: 0 0 10px rgba(255, 42, 95, 0.15);
-    }
-
-    .disarm-btn:not(:disabled):not(.armed):hover {
-        background: rgba(0, 240, 255, 0.1);
-        color: var(--accent);
-        border-color: rgba(0, 240, 255, 0.3);
-        box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
-    }
-    
-    /* Outer tech visual decorations */
-    .dial-outer-border {
-        fill: none;
-        stroke: rgba(255, 255, 255, 0.02);
-        stroke-width: 1px;
-        stroke-dasharray: 4, 12;
-    }
-    .dial-center-inset {
-        fill: #06090e;
-        stroke: rgba(0, 240, 255, 0.03);
-        stroke-width: 1px;
-    }
-
-    /* Tick styling */
     .dial-tick {
         stroke: rgba(255, 255, 255, 0.1);
-        stroke-width: 1.5px;
-        transition: stroke 0.2s;
+        stroke-width: 1px;
+        transition: stroke 0.2s ease;
     }
     .dial-tick.major {
-        stroke: rgba(255, 255, 255, 0.25);
-        stroke-width: 2px;
-    }
-    .dial-tick.highlighted {
-        stroke: var(--accent);
-        filter: drop-shadow(0 0 1px var(--accent));
+        stroke: rgba(255, 255, 255, 0.2);
+        stroke-width: 1.5px;
     }
 
     .dial-track {
         fill: none;
-        stroke: rgba(255, 255, 255, 0.04);
-        stroke-width: 6px;
-    }
-    .dial-fill-actual {
-        fill: none;
-        stroke: var(--accent);
-        stroke-width: 6px;
-        stroke-linecap: round;
-    }
-    .dial-swept-sector {
-        fill: rgba(0, 240, 255, 0.02);
-        pointer-events: none;
+        stroke: rgba(255, 255, 255, 0.06);
+        stroke-width: 5px;
     }
 
-    /* Glowing Needle */
-    .dial-needle-shadow {
-        stroke: rgba(0,0,0,0.5);
+    .dial-fill-actual {
+        fill: none;
+        stroke: var(--accent, #0A84FF);
         stroke-width: 5px;
         stroke-linecap: round;
     }
-    .dial-needle-poly {
-        fill: var(--accent);
-        stroke: #fff;
+
+    .dial-center-inset {
+        fill: #1c1c1e;
+        stroke: rgba(255, 255, 255, 0.06);
         stroke-width: 0.5px;
     }
 
-    /* Target Handle and Halo */
+    .dial-needle-poly {
+        fill: var(--accent, #0A84FF);
+        stroke: rgba(255, 255, 255, 0.5);
+        stroke-width: 0.5px;
+        transition: fill 0.2s ease;
+    }
+    .dial-needle-poly.disarmed {
+        fill: var(--text-muted, #6e6e73) !important;
+        stroke: rgba(255, 255, 255, 0.15) !important;
+    }
+
     .dial-target-handle {
-        fill: #FF2A5F;
-        stroke: #fff;
+        fill: var(--warning, #FF9F0A);
+        stroke: rgba(255, 255, 255, 0.7);
         stroke-width: 1.5px;
         cursor: grab;
+        transition: r 0.15s ease;
     }
     .dial-target-halo {
-        fill: rgba(255, 42, 95, 0.05);
-        stroke: rgba(255, 42, 95, 0.15);
+        fill: rgba(255, 159, 10, 0.06);
+        stroke: rgba(255, 159, 10, 0.15);
         stroke-width: 1px;
-        stroke-dasharray: 2, 2;
+        stroke-dasharray: 2, 3;
         pointer-events: none;
-        transform-origin: center;
-        transition: stroke-width 0.2s, r 0.2s;
+        transition: all 0.15s ease;
     }
     .dial-target-halo.dragging {
         stroke-width: 1.5px;
-        r: 18;
-        stroke: rgba(255, 42, 95, 0.3);
-        fill: rgba(255, 42, 95, 0.08);
+        r: 15;
+        stroke: rgba(255, 159, 10, 0.3);
+        fill: rgba(255, 159, 10, 0.08);
     }
 
-    /* Interior Typography */
+    /* ── Center Typography ──────────────────────────────── */
     .dial-text-val {
-        fill: #fff;
-        font-size: 2.2rem;
+        fill: var(--text-main, #f5f5f7);
+        font-size: 2rem;
         font-weight: 700;
         text-anchor: middle;
         dominant-baseline: middle;
-        font-family: 'Outfit', monospace;
+        font-family: var(--font), monospace;
         letter-spacing: -0.5px;
     }
     .dial-text-deg {
-        fill: var(--accent);
-        font-size: 0.62rem;
-        font-weight: 700;
-        letter-spacing: 1px;
+        fill: var(--accent, #0A84FF);
+        font-size: 0.55rem;
+        font-weight: 600;
+        letter-spacing: 1.5px;
         text-anchor: middle;
         dominant-baseline: middle;
     }
     .dial-text-lbl {
-        fill: var(--text-muted);
-        font-size: 0.58rem;
+        fill: var(--text-muted, #6e6e73);
+        font-size: 0.5rem;
         text-transform: uppercase;
         letter-spacing: 1px;
         text-anchor: middle;
         dominant-baseline: middle;
     }
 
-    /* Premium Custom Sliders */
+    /* ── Speedometer Overrides ──────────────────────────── */
+    .speedometer-center-inset {
+        stroke: rgba(255, 159, 10, 0.06) !important;
+    }
+
+    .speedometer-tick {
+        stroke: rgba(255, 255, 255, 0.08);
+        transition: stroke 0.2s ease;
+    }
+    .speedometer-tick.highlighted {
+        stroke: var(--warning, #FF9F0A) !important;
+    }
+    .speedometer-tick.red-line {
+        stroke: rgba(255, 69, 58, 0.2);
+    }
+    .speedometer-tick.red-line.highlighted {
+        stroke: var(--danger, #FF453A) !important;
+    }
+
+    .speedometer-tick-label {
+        fill: rgba(255, 255, 255, 0.2);
+        font-size: 0.45rem;
+        font-weight: 600;
+        text-anchor: middle;
+        dominant-baseline: middle;
+        font-family: var(--font), monospace;
+    }
+    .speedometer-tick-label.highlighted {
+        fill: var(--warning, #FF9F0A);
+    }
+    .speedometer-tick-label.red-line {
+        fill: rgba(255, 69, 58, 0.3);
+    }
+    .speedometer-tick-label.red-line.highlighted {
+        fill: var(--danger, #FF453A);
+    }
+
+    .speedometer-red-line {
+        fill: none;
+        stroke: var(--danger, #FF453A);
+        stroke-width: 2px;
+        stroke-linecap: round;
+        opacity: 0.5;
+    }
+
+    .speedometer-fill-actual {
+        stroke: var(--warning, #FF9F0A) !important;
+        stroke-width: 5px;
+        stroke-linecap: round;
+    }
+
+    .speedometer-needle {
+        fill: var(--warning, #FF9F0A) !important;
+        stroke: rgba(255, 255, 255, 0.5);
+        stroke-width: 0.5px;
+    }
+
+    .speedometer-text-val {
+        font-family: var(--font), monospace;
+        letter-spacing: -0.5px;
+    }
+    .speedometer-text-ma {
+        fill: var(--warning, #FF9F0A) !important;
+        transition: fill 0.2s ease;
+    }
+    .speedometer-text-ma.overlimit {
+        fill: var(--danger, #FF453A) !important;
+        animation: subtlePulse 2s ease-in-out infinite;
+    }
+
+    @keyframes subtlePulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    /* ── Slider Controls ───────────────────────────────── */
     .slider-controls {
         display: flex;
         flex-direction: column;
-        gap: 1.2rem;
+        gap: 1rem;
     }
     .slider-group {
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 0.4rem;
     }
     .label-row {
         display: flex;
         justify-content: space-between;
+        align-items: baseline;
         font-size: 0.8rem;
     }
     .label {
-        color: var(--text-muted);
+        color: var(--text-muted, #6e6e73);
         font-weight: 500;
         text-transform: uppercase;
-        font-size: 0.72rem;
-        letter-spacing: 0.5px;
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
     }
     .value-highlight {
-        color: var(--accent);
-        font-weight: bold;
-        font-family: monospace;
+        color: var(--text-main, #f5f5f7);
+        font-weight: 600;
+        font-family: var(--font), monospace;
+        font-size: 0.82rem;
+        font-variant-numeric: tabular-nums;
     }
-    
+
     .slider-wrapper {
         position: relative;
         display: flex;
         align-items: center;
-        background: rgba(255,255,255,0.03);
-        border-radius: 4px;
-        height: 6px;
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 3px;
+        height: 4px;
         width: 100%;
         overflow: visible;
-        border: 1px solid rgba(255,255,255,0.02);
     }
-    
+
     .slider-fill {
         position: absolute;
         left: 0;
         top: 0;
         height: 100%;
-        background: linear-gradient(90deg, rgba(0, 240, 255, 0.4), var(--accent));
-        border-radius: 4px;
+        background: var(--accent, #0A84FF);
+        border-radius: 3px;
         pointer-events: none;
         z-index: 1;
-        box-shadow: 0 0 5px rgba(0, 240, 255, 0.3);
+        transition: width 0.05s linear;
     }
-    
+    .slider-fill.velocity-fill {
+        background: var(--indigo, #5E5CE6);
+    }
+    .slider-fill.current-fill {
+        background: var(--warning, #FF9F0A);
+    }
+
     input[type=range] {
         -webkit-appearance: none;
         width: 100%;
@@ -914,32 +792,108 @@
     }
     input[type=range]::-webkit-slider-thumb {
         -webkit-appearance: none;
-        height: 16px; 
-        width: 16px;
+        height: 14px;
+        width: 14px;
         border-radius: 50%;
         background: #fff;
         cursor: pointer;
-        box-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
-        border: 2px solid var(--accent);
-        transition: transform 0.1s;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+        border: none;
+        transition: transform 0.15s ease;
     }
     input[type=range]::-webkit-slider-thumb:hover {
         transform: scale(1.15);
     }
     input[type=range]::-webkit-slider-runnable-track {
-        width: 100%; 
-        height: 6px;
+        width: 100%;
+        height: 4px;
+        background: transparent;
+    }
+    input[type=range]::-moz-range-thumb {
+        height: 14px;
+        width: 14px;
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+        border: none;
+    }
+    input[type=range]::-moz-range-track {
+        width: 100%;
+        height: 4px;
         background: transparent;
     }
     input[type=range]:disabled::-webkit-slider-thumb {
-        background: var(--text-muted);
+        background: var(--text-muted, #6e6e73);
         box-shadow: none;
-        border-color: transparent;
         cursor: not-allowed;
     }
+
     .hint-text {
-        font-size: 0.7rem;
-        color: var(--text-muted);
-        font-style: italic;
+        font-size: 0.68rem;
+        color: var(--text-muted, #6e6e73);
+        font-style: normal;
+        opacity: 0.7;
+    }
+
+    /* ── Arm/Disarm Toggle ──────────────────────────────── */
+    .toggle-group {
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        padding-top: 1rem;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.25rem;
+    }
+
+    .toggle-row {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+
+    .status-indicator {
+        font-family: var(--font), sans-serif;
+        font-size: 0.82rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+    }
+    .status-indicator.armed {
+        color: var(--success, #30D158);
+    }
+    .status-indicator.disarmed {
+        color: var(--text-muted, #6e6e73);
+    }
+
+    .disarm-btn {
+        font-weight: 600;
+        font-size: 0.72rem;
+        padding: 0.4rem 1rem;
+        border-radius: 100px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: var(--text-main, #f5f5f7);
+        transition: all 0.2s ease;
+        text-transform: none;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+    }
+
+    .disarm-btn:not(:disabled).armed:hover {
+        background: rgba(255, 69, 58, 0.1);
+        color: var(--danger, #FF453A);
+        border-color: rgba(255, 69, 58, 0.25);
+    }
+
+    .disarm-btn:not(:disabled):not(.armed):hover {
+        background: rgba(10, 132, 255, 0.1);
+        color: var(--accent, #0A84FF);
+        border-color: rgba(10, 132, 255, 0.25);
+    }
+
+    .disarm-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
     }
 </style>

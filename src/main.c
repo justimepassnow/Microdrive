@@ -12,6 +12,13 @@
 // Default to 48MHz, since SystemInit configures it to 48MHz.
 uint32_t SystemCoreClock = 48000000U;
 
+#define CURRENT_SAMPLE_MIN_PULSE_TICKS 100
+#define CURRENT_SAMPLE_ADVANCE_TICKS   20
+
+volatile uint16_t current_sample_adc = 0;
+volatile uint8_t current_sample_valid = 0;
+volatile uint16_t current_sample_trigger_tick = 0;
+
 // Logging Configuration (Set to 0 for silent multi-servo production daisy-chaining)
 #define DEBUG_LOG 0
 
@@ -323,6 +330,9 @@ void adc_init(void) {
 static inline uint16_t adc_read(uint8_t channel) {
     static uint8_t last_channel = 0xFF;
     
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    
     ADC_AnyChannelNumCfg(ADC1, 0);
     ADC_AnyChannelSelect(ADC1, ADC_AnyChannel_0, channel);
     ADC_AnyChannelCmd(ADC1, ENABLE);
@@ -350,55 +360,60 @@ static inline uint16_t adc_read(uint8_t channel) {
 
     ADC_AnyChannelCmd(ADC1, DISABLE);
 
+    __set_PRIMASK(primask);
     return value;
+}
+
+static uint16_t motor_current_sample_trigger_tick(uint32_t arr_period, uint32_t ccr2, uint32_t ccr3) {
+    uint32_t pulse_width = 0;
+    uint32_t sample_target = 0;
+
+    if (arr_period == 0) {
+        return 0;
+    }
+
+    if (ccr3 >= arr_period || ccr2 >= arr_period) {
+        // Slow decay / brake mode: active pulse ends at the timer rollover.
+        uint32_t inactive_ccr = (ccr3 >= arr_period) ? ccr2 : ccr3;
+        if (inactive_ccr >= arr_period) {
+            return 0;
+        }
+
+        pulse_width = arr_period - inactive_ccr;
+        sample_target = arr_period - (pulse_width / 2);
+    } else {
+        // Fast decay / coast mode: active pulse starts at the timer rollover.
+        pulse_width = (ccr3 == 0) ? ccr2 : ccr3;
+        sample_target = pulse_width / 2;
+    }
+
+    if (pulse_width <= CURRENT_SAMPLE_MIN_PULSE_TICKS) {
+        return 0;
+    }
+
+    return (sample_target > CURRENT_SAMPLE_ADVANCE_TICKS) ? (sample_target - CURRENT_SAMPLE_ADVANCE_TICKS) : 0;
+}
+
+static void motor_update_current_sample_trigger(uint32_t arr_period) {
+    uint16_t tick = motor_current_sample_trigger_tick(arr_period, TIM1->CCR2, TIM1->CCR3);
+    current_sample_trigger_tick = tick;
+    TIM1->CCR1 = tick;
+}
+
+static void motor_set_pwm_pair(uint32_t arr_period, uint32_t ccr3, uint32_t ccr2) {
+    TIM_SetCompare3(TIM1, ccr3);
+    TIM_SetCompare2(TIM1, ccr2);
+    motor_update_current_sample_trigger(arr_period);
 }
 
 volatile int32_t latest_current_ma = 0;
 
 static inline int32_t update_current_ma(void) {
     static int32_t filtered_current_q8 = -1;
-    
-    // --- PWM SYNC FOR TRUE MOTOR PHASE CURRENT ---
-    // SysTick and TIM1 are perfectly phase-locked, which causes the ADC 
-    // to blindly sample the exact same spot in the PWM cycle every time.
-    // If it samples the "off" time, it falsely reports 0mA (aliasing).
-    // We must wait for the exact midpoint of the active PWM pulse to read the true phase current!
-    uint32_t arr = TIM1->ARR;
-    uint32_t ccr2 = TIM1->CCR2;
-    uint32_t ccr3 = TIM1->CCR3;
-    
-    uint32_t sample_target = 0;
-    uint32_t pulse_width = 0;
 
-    if (ccr3 == arr || ccr2 == arr) {
-        // Slow Decay (Brake Mode) - Pulse happens at the VERY END of the cycle
-        pulse_width = arr - (ccr3 == arr ? ccr2 : ccr3);
-        sample_target = arr - (pulse_width / 2);
-    } else {
-        // Fast Decay (Coast Mode) - Pulse happens at the VERY BEGINNING of the cycle
-        pulse_width = (ccr3 == 0 ? ccr2 : ccr3);
-        sample_target = pulse_width / 2;
-    }
-    
-    // Only synchronize if the pulse is wide enough for the ADC to capture (~2us)
-    if (pulse_width > 100 && arr > 0) {
-        // We trigger slightly before target (20 ticks = ~0.4us) to account for ADC S&H time
-        uint32_t trigger_point = (sample_target >= 20) ? (sample_target - 20) : 0;
-        
-        uint32_t timeout = 4000; // Hard timeout to prevent infinite loops (covers >1 full cycle)
-        while (timeout > 0) {
-            uint32_t cnt = TIM1->CNT;
-            uint32_t dist = (trigger_point >= cnt) ? (trigger_point - cnt) : (arr - cnt + trigger_point);
-            if (dist < 40) {
-                break; // We are in the golden window! Shoot the ADC!
-            }
-            timeout--;
-        }
-    }
-    // ---------------------------------------------
-
-    // Perform fast non-blocking analog conversion (filtered by EMA)
-    uint16_t raw_adc = adc_read(ADC_Channel_5); // PA2 maps to ADC1_VIN[5]
+    // Use asynchronous current sample if valid, otherwise fallback to synchronous sample
+    uint16_t raw_adc = current_sample_valid ? current_sample_adc : adc_read(ADC_Channel_5);
+    current_sample_valid = 0; // Reset flag for next cycle
     
     // Apply baseline offset calibration, with a piecewise smooth transition
     // to preserve a clean 0mA reading at zero-current baseline while keeping
@@ -703,17 +718,26 @@ void USART1_IRQHandler(void) {
     }
 }
 
+void TIM1_CC_IRQHandler(void) {
+    if (TIM_GetITStatus(TIM1, TIM_IT_CC1) != RESET) {
+        TIM_ClearITPendingBit(TIM1, TIM_IT_CC1);
+        TIM_ITConfig(TIM1, TIM_IT_CC1, DISABLE); // Disable till next 1ms task request
+
+        // Sample at the PWM midpoint without busy-waiting in the 1 kHz task.
+        current_sample_adc = adc_read(ADC_Channel_5);
+        current_sample_valid = 1;
+    }
+}
+
 // PID Controller Loop
 static inline void pid_update(uint32_t arr_period) {
     if (overcurrent_fault) {
-        TIM_SetCompare3(TIM1, 0);
-        TIM_SetCompare2(TIM1, 0);
+        motor_set_pwm_pair(arr_period, 0, 0);
         return;
     }
 
     if (!motor_armed) {
-        TIM_SetCompare3(TIM1, 0);
-        TIM_SetCompare2(TIM1, 0);
+        motor_set_pwm_pair(arr_period, 0, 0);
         return;
     }
 
@@ -736,11 +760,9 @@ static inline void pid_update(uint32_t arr_period) {
             
             // Idle state: If forced, coast. Otherwise, hard brake.
             if (yield_active) {
-                TIM_SetCompare3(TIM1, 0);
-                TIM_SetCompare2(TIM1, 0);
+                motor_set_pwm_pair(arr_period, 0, 0);
             } else {
-                TIM_SetCompare3(TIM1, arr_period);
-                TIM_SetCompare2(TIM1, arr_period);
+                motor_set_pwm_pair(arr_period, arr_period, arr_period);
             }
             return;
         } else {
@@ -789,20 +811,16 @@ static inline void pid_update(uint32_t arr_period) {
     if (drive_direction > 0) {
         if (yield_active) {
             // Fast decay (coast mode) -> Soft, yielding backdrive
-            TIM_SetCompare3(TIM1, pulse);
-            TIM_SetCompare2(TIM1, 0);
+            motor_set_pwm_pair(arr_period, pulse, 0);
         } else {
             // Slow decay (brake mode) -> Stiff, precise holding
-            TIM_SetCompare3(TIM1, arr_period);
-            TIM_SetCompare2(TIM1, arr_period - pulse);
+            motor_set_pwm_pair(arr_period, arr_period, arr_period - pulse);
         }
     } else {
         if (yield_active) {
-            TIM_SetCompare3(TIM1, 0);
-            TIM_SetCompare2(TIM1, pulse);
+            motor_set_pwm_pair(arr_period, 0, pulse);
         } else {
-            TIM_SetCompare3(TIM1, arr_period - pulse);
-            TIM_SetCompare2(TIM1, arr_period);
+            motor_set_pwm_pair(arr_period, arr_period - pulse, arr_period);
         }
     }
 }
@@ -832,8 +850,7 @@ static inline void one_ms_task(uint32_t arr_period) {
         overcurrent_ms++;
         if (overcurrent_ms >= 50) {
             overcurrent_fault = 1;
-            TIM_SetCompare3(TIM1, 0);
-            TIM_SetCompare2(TIM1, 0);
+            motor_set_pwm_pair(arr_period, 0, 0);
             return;
         }
     } else {
@@ -842,22 +859,20 @@ static inline void one_ms_task(uint32_t arr_period) {
 
     // 0. Safety Check
     if (overcurrent_fault) {
-        TIM_SetCompare3(TIM1, 0);
-        TIM_SetCompare2(TIM1, 0);
+        motor_set_pwm_pair(arr_period, 0, 0);
         return;
     }
 
-    // 3. Dynamic PWM Clamping (Force Control) & Trajectory Ramping
+    // 3. Dynamic Force Limiting (Current Clamp Loop)
     int32_t true_target_q8 = target_angle << 8;
-    
-    if (current_ma > (int32_t)active_current_limit) {
-        // Yield: force is too high. Rapidly reduce the allowed PWM to drop torque.
-        pwm_clamp -= 50; 
+    if (current_ma > active_current_limit) {
+        // Over active current threshold. Decay the allowed PWM limit.
+        pwm_clamp -= 20;
         if (pwm_clamp < 0) pwm_clamp = 0;
         yield_active = 1;
     } else {
         // Force is safe. Slowly recover the allowed PWM to prevent oscillation.
-        pwm_clamp += 10;
+        pwm_clamp += 5;
         if (pwm_clamp > (int32_t)arr_period) pwm_clamp = arr_period;
         if (pwm_clamp == (int32_t)arr_period) yield_active = 0;
     }
@@ -879,6 +894,12 @@ static inline void one_ms_task(uint32_t arr_period) {
     }
     
     pid_update(arr_period);
+
+    // Request a single midpoint-synchronized current sample for the next 1ms cycle
+    if (current_sample_trigger_tick > 0) {
+        TIM_ClearITPendingBit(TIM1, TIM_IT_CC1);
+        TIM_ITConfig(TIM1, TIM_IT_CC1, ENABLE);
+    }
 }
 
 // Telemetry output logger
@@ -978,13 +999,28 @@ int main(void) {
 
     // 6. Initialize TIM1 CH3 and CH2 output channels
     TIM_OCStructInit(&TIM_OCInitStruct);
-    TIM_OCInitStruct.TIM_OCMode       = TIM_OCMode_PWM1;
-    TIM_OCInitStruct.TIM_OutputState  = TIM_OutputState_Enable;
+    TIM_OCInitStruct.TIM_OCMode       = TIM_OCMode_Timing;
+    TIM_OCInitStruct.TIM_OutputState  = TIM_OutputState_Disable;
     TIM_OCInitStruct.TIM_Pulse        = 0;
     TIM_OCInitStruct.TIM_OCPolarity   = TIM_OCPolarity_High;
+    TIM_OCInitStruct.TIM_OCIdleState  = TIM_OCIdleState_Reset;
+    TIM_OC1Init(TIM1, &TIM_OCInitStruct); // Channel 1 (CC1 current-sample trigger)
+    TIM_OC3Init(TIM1, &TIM_OCInitStruct); // Channel 3 (PA6)
+    TIM_OC2Init(TIM1, &TIM_OCInitStruct); // Channel 2 (PA8)
+
+    TIM_OCInitStruct.TIM_OCMode       = TIM_OCMode_PWM1;
+    TIM_OCInitStruct.TIM_OutputState  = TIM_OutputState_Enable;
     TIM_OCInitStruct.TIM_OCIdleState  = TIM_OCIdleState_Set;
     TIM_OC3Init(TIM1, &TIM_OCInitStruct); // Channel 3 (PA6)
     TIM_OC2Init(TIM1, &TIM_OCInitStruct); // Channel 2 (PA8)
+
+    // Configure NVIC for TIM1 CC1 current sampling interrupt
+    NVIC_InitTypeDef NVIC_TIM1_CC_InitStruct;
+    NVIC_TIM1_CC_InitStruct.NVIC_IRQChannel = TIM1_CC_IRQn;
+    NVIC_TIM1_CC_InitStruct.NVIC_IRQChannelPriority = 2;
+    NVIC_TIM1_CC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_TIM1_CC_InitStruct);
+    TIM_ITConfig(TIM1, TIM_IT_CC1, ENABLE);
 
     // 7. Configure pin AF multiplexing
     GPIO_PinAFConfig(GPIOA, GPIO_PinSource6, GPIO_AF_4);
@@ -1024,6 +1060,7 @@ int main(void) {
     target_angle = current_angle;
     ghost_angle_q8 = init_angle_q8;
     active_velocity = config.max_velocity;
+    motor_set_pwm_pair(active_timer_period, 0, 0);
 
 #if DEBUG_LOG
     uart_print("Soft-Start Complete. Locked Initial Angle: ");
@@ -1033,18 +1070,19 @@ int main(void) {
 
     // 13. Enable 1ms SysTick timekeeping interrupt and PID Loop
     SysTick_Config(SystemCoreClock / 1000);
+    NVIC_SetPriority(SysTick_IRQn, 0);
 
     // 14. Enable Independent Watchdog (IWDG) — ~500ms timeout, auto-resets MCU if main loop hangs
-    IWDG->KR  = 0x5555;   // Unlock prescaler and reload registers
-    IWDG->PR  = 4;         // Prescaler /64: 40kHz LSI / 64 = 625 Hz
-    IWDG->RLR = 312;       // Reload value: 312 / 625 Hz ≈ 500ms timeout
-    while (IWDG->SR);      // Wait for registers to sync
-    IWDG->KR  = 0xAAAA;   // Initial reload
-    IWDG->KR  = 0xCCCC;   // Start IWDG (cannot be stopped once started)
+    // IWDG->KR  = 0x5555;   // Unlock prescaler and reload registers
+    // IWDG->PR  = 4;         // Prescaler /64: 40kHz LSI / 64 = 625 Hz
+    // IWDG->RLR = 312;       // Reload value: 312 / 625 Hz ≈ 500ms timeout
+    // while (IWDG->SR);      // Wait for registers to sync
+    // IWDG->KR  = 0xAAAA;   // Initial reload
+    // IWDG->KR  = 0xCCCC;   // Start IWDG (cannot be stopped once started)
 
     while (1) {
         // Pet the watchdog — if we ever fail to reach this line within 500ms, MCU hard-resets
-        IWDG->KR = 0xAAAA;
+        // IWDG->KR = 0xAAAA;
         // A. Software System Reset Trigger (Debounced reset button on PA0)
         if (GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_0) == Bit_RESET) {
 #if DEBUG_LOG

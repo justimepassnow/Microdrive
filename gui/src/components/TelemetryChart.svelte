@@ -26,15 +26,20 @@
     function draw() {
         if (!canvasEl) return;
         const ctx = canvasEl.getContext('2d');
-        const width = canvasEl.width;
-        const height = canvasEl.height;
+        const dpr = window.devicePixelRatio || 1;
+        const width = canvasEl.width / dpr;
+        const height = canvasEl.height / dpr;
 
-        // Clear canvas
-        ctx.fillStyle = '#0a0d14';
+        // Reset scale transform and clear logical area
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(dpr, dpr);
+
+        // Clear canvas — Apple dark gray
+        ctx.fillStyle = '#1c1c1e';
         ctx.fillRect(0, 0, width, height);
 
         // Draw background grid lines (horizontal)
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
         ctx.lineWidth = 1;
         
         const gridRows = 4;
@@ -45,15 +50,19 @@
             ctx.lineTo(width, y);
             ctx.stroke();
 
-            // Grid scale labels
-            ctx.fillStyle = 'rgba(148, 163, 184, 0.5)';
-            ctx.font = '9px monospace';
+            // Grid scale labels — slightly brighter
+            ctx.fillStyle = 'rgba(148, 163, 184, 0.65)';
+            ctx.font = '10px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            
             // Left (Angle: 0 to 360)
+            ctx.textAlign = 'left';
             const angleVal = Math.round(360 - (360 / gridRows) * i);
             ctx.fillText(`${angleVal}°`, 5, y - 4);
+            
             // Right (Current: 0 to 1000mA)
+            ctx.textAlign = 'right';
             const curVal = Math.round(1000 - (1000 / gridRows) * i);
-            ctx.fillText(`${curVal}mA`, width - 35, y - 4);
+            ctx.fillText(`${curVal}mA`, width - 5, y - 4);
         }
 
         if (history.length < 2) return;
@@ -76,8 +85,8 @@
             return height - padding - (capped / 1000) * (height - 2 * padding);
         };
 
-        // 1. Draw Target Angle Line (Magenta Dashed)
-        ctx.strokeStyle = '#FF2A5F';
+        // 1. Draw Target Angle Line (Soft Orange Dashed)
+        ctx.strokeStyle = '#FF9F0A';
         ctx.lineWidth = 1.5;
         ctx.setLineDash([4, 4]);
         ctx.beginPath();
@@ -90,8 +99,8 @@
         ctx.stroke();
         ctx.setLineDash([]); // Reset line dash
 
-        // 2. Draw Current Line (Amber/Orange)
-        ctx.strokeStyle = '#FBBF24';
+        // 2. Draw Current Line (Soft Purple)
+        ctx.strokeStyle = '#BF5AF2';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         history.forEach((pt, idx) => {
@@ -102,11 +111,11 @@
         });
         ctx.stroke();
 
-        // 3. Draw Actual Angle Line (Glowing Cyan)
-        ctx.strokeStyle = '#00F0FF';
-        ctx.lineWidth = 2.5;
-        ctx.shadowColor = 'rgba(0, 240, 255, 0.4)';
-        ctx.shadowBlur = 6;
+        // 3. Draw Actual Angle Line (Accent Blue with subtle shadow)
+        ctx.strokeStyle = '#0A84FF';
+        ctx.lineWidth = 2;
+        ctx.shadowColor = 'rgba(10, 132, 255, 0.3)';
+        ctx.shadowBlur = 4;
         ctx.beginPath();
         history.forEach((pt, idx) => {
             const x = idx * dx;
@@ -121,14 +130,15 @@
     }
 
     onMount(() => {
-        draw();
-        
         // Handle resizing or display sync if needed
         const resizeObserver = new ResizeObserver(() => {
             if (canvasEl) {
                 const rect = canvasEl.parentElement.getBoundingClientRect();
-                canvasEl.width = rect.width;
-                canvasEl.height = 140; // fixed height matching layout
+                const dpr = window.devicePixelRatio || 1;
+                canvasEl.width = rect.width * dpr;
+                canvasEl.height = 140 * dpr;
+                canvasEl.style.width = `${rect.width}px`;
+                canvasEl.style.height = `140px`;
                 draw();
             }
         });
@@ -152,26 +162,28 @@
     </div>
     
     <div class="canvas-container">
-        <canvas bind:this={canvasEl} height="140"></canvas>
+        <canvas bind:this={canvasEl}></canvas>
     </div>
 </div>
 
 <style>
     .chart-wrapper {
-        background: rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.03);
-        border-radius: 12px;
-        padding: 0.8rem;
+        background: rgba(28, 28, 30, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 0.85rem 1rem;
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
-        margin-top: 1rem;
+        gap: 0.6rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3),
+                    0 4px 12px rgba(0, 0, 0, 0.15);
     }
     .chart-legend {
         display: flex;
         justify-content: flex-start;
         gap: 1.2rem;
-        font-size: 0.75rem;
+        font-size: 0.72rem;
+        letter-spacing: 0.01em;
     }
     .legend-item {
         display: flex;
@@ -181,18 +193,25 @@
         font-weight: 500;
     }
     .color-dot {
-        width: 8px;
-        height: 8px;
+        width: 7px;
+        height: 7px;
         border-radius: 50%;
     }
-    .color-dot.actual { background: var(--accent); box-shadow: 0 0 5px var(--accent); }
-    .color-dot.target { background: var(--danger); }
-    .color-dot.current { background: #FBBF24; }
+    .color-dot.actual {
+        background: var(--accent, #0A84FF);
+        box-shadow: 0 0 4px rgba(10, 132, 255, 0.4);
+    }
+    .color-dot.target {
+        background: var(--warning, #FF9F0A);
+    }
+    .color-dot.current {
+        background: #BF5AF2;
+    }
     
     .canvas-container {
         width: 100%;
         height: 140px;
-        border-radius: 8px;
+        border-radius: 10px;
         overflow: hidden;
     }
     canvas {

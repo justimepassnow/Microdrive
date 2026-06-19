@@ -1,54 +1,87 @@
-/* global design system for Servo Control Dashboard */
+/* ═══════════════════════════════════════════════════════════
+   μDrive — Global Design System
+   Apple-inspired dark interface for servo control
+   ═══════════════════════════════════════════════════════════ */
 
+/* ── Design Tokens ─────────────────────────────────────── */
 :root {
-    --bg: #07090e;
-    --panel-bg: rgba(13, 17, 28, 0.7);
-    --panel-border: rgba(255, 255, 255, 0.06);
-    --text-main: #f1f5f9;
-    --text-muted: #64748b;
-    
-    /* Neon accents */
-    --accent: #00f0ff;          /* Cyan */
-    --accent-glow: rgba(0, 240, 255, 0.35);
-    
-    --magenta: #ff2a5f;         /* Target / Alarm */
-    --magenta-glow: rgba(255, 42, 95, 0.35);
-    
-    --success: #10b981;         /* OK Emerald */
-    --success-glow: rgba(16, 185, 129, 0.3);
-    
-    --warning: #f59e0b;         /* Amber current */
-    --warning-glow: rgba(245, 158, 11, 0.35);
-    
-    --indigo: #6366f1;          /* State Indigo */
-    
-    --font: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    /* Surface palette — warm charcoal, never pure black */
+    --bg:               #1a1a1e;
+    --bg-elevated:      #242428;
+    --panel-bg:         rgba(44, 44, 48, 0.72);
+    --panel-border:     rgba(255, 255, 255, 0.06);
+    --card-bg:          rgba(255, 255, 255, 0.04);
+    --card-bg-hover:    rgba(255, 255, 255, 0.07);
+
+    /* Typography */
+    --text-main:        #f5f5f7;
+    --text-secondary:   #a1a1a6;
+    --text-muted:       #6e6e73;
+
+    /* Accent — Apple system blue */
+    --accent:           #0A84FF;
+    --accent-hover:     #409CFF;
+    --accent-subtle:    rgba(10, 132, 255, 0.12);
+
+    /* Semantic colours */
+    --success:          #30D158;
+    --success-subtle:   rgba(48, 209, 88, 0.12);
+
+    --warning:          #FF9F0A;
+    --warning-subtle:   rgba(255, 159, 10, 0.12);
+
+    --danger:           #FF453A;
+    --danger-subtle:    rgba(255, 69, 58, 0.12);
+
+    --indigo:           #5E5CE6;
+    --indigo-subtle:    rgba(94, 92, 230, 0.12);
+
+    /* Legacy alias so components using --magenta still work */
+    --magenta:          var(--danger);
+
+    /* Typography stack */
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display",
+            "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+    /* Motion */
+    --ease-out:  cubic-bezier(0.25, 1, 0.5, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* Radii */
+    --radius-sm:  10px;
+    --radius-md:  16px;
+    --radius-lg:  20px;
+    --radius-pill: 100px;
 }
 
-* { 
-    box-sizing: border-box; 
-    margin: 0; 
-    padding: 0; 
+/* ── Reset ─────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
-/* Beautiful tech mesh-grid layout overlay */
+/* ── Body — clean gradient, no tech grid ───────────────── */
 body {
     background-color: var(--bg);
-    background-image: 
-        linear-gradient(rgba(255, 255, 255, 0.007) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.007) 1px, transparent 1px),
-        radial-gradient(circle at 10% 30%, rgba(0, 240, 255, 0.07), transparent 30%),
-        radial-gradient(circle at 90% 70%, rgba(255, 42, 95, 0.06), transparent 30%);
-    background-size: 24px 24px, 24px 24px, 100% 100%, 100% 100%;
+    background-image:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(10, 132, 255, 0.06), transparent),
+        radial-gradient(ellipse 60% 50% at 80% 100%, rgba(94, 92, 230, 0.04), transparent);
     color: var(--text-main);
     font-family: var(--font);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;
     display: flex;
     justify-content: center;
     padding: 1.5rem;
+    line-height: 1.5;
 }
 
-/* Layout Core */
+/* ── Layout Core ───────────────────────────────────────── */
 .app-container {
     width: 100%;
     max-width: 1550px;
@@ -57,47 +90,51 @@ body {
     gap: 1.2rem;
 }
 
-/* Glassmorphism panels */
+/* ── Frosted Glass Panels ──────────────────────────────── */
 .glass-panel {
     background: var(--panel-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(40px) saturate(1.5);
+    -webkit-backdrop-filter: blur(40px) saturate(1.5);
     border: 1px solid var(--panel-border);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 1.5rem;
-    box-shadow: 
-        0 10px 40px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.03);
-    transition: box-shadow 0.3s, border-color 0.3s;
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.25),
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.06);
+    transition:
+        box-shadow 0.4s var(--ease-out),
+        border-color 0.4s var(--ease-out);
 }
 .glass-panel:hover {
-    box-shadow: 
-        0 15px 45px rgba(0, 0, 0, 0.5),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.3),
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Connection Header */
+/* ── Header ────────────────────────────────────────────── */
 header {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
+
 .brand {
     display: flex;
     align-items: center;
-    gap: 1.2rem;
+    gap: 1rem;
 }
+
 .logo-orb {
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.08);
-    border: 2px solid rgba(255, 255, 255, 0.05);
-    box-shadow: none;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
     position: relative;
+    transition: border-color 0.5s var(--ease-out);
 }
-.logo-orb:after {
+.logo-orb::after {
     content: '';
     position: absolute;
     top: 50%;
@@ -106,121 +143,144 @@ header {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.2);
-    transition: background 0.4s, box-shadow 0.4s;
+    background: rgba(255, 255, 255, 0.15);
+    transition: background 0.5s var(--ease-out), box-shadow 0.5s var(--ease-out);
 }
-.logo-orb.connected:after {
-    background: var(--accent);
-    box-shadow: 0 0 12px var(--accent);
+.logo-orb.connected {
+    border-color: rgba(48, 209, 88, 0.3);
+}
+.logo-orb.connected::after {
+    background: var(--success);
+    box-shadow: 0 0 10px rgba(48, 209, 88, 0.4);
 }
 
-h1 { 
-    font-size: 1.4rem; 
-    font-weight: 700; 
-    letter-spacing: 0.5px; 
-    background: linear-gradient(120deg, #fff 40%, var(--accent) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+/* ── Typography ────────────────────────────────────────── */
+h1 {
+    font-size: 1.45rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-main);
+    /* Clean solid text — no gradient clip trick */
 }
-h2 { 
-    font-size: 1.1rem; 
-    font-weight: 600; 
+h2 {
+    font-size: 0.8rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--text-main); 
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
 }
-h3 { 
-    font-size: 0.95rem; 
-    font-weight: 600; 
+h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
     color: var(--text-main);
 }
 
-.connection-group { 
-    display: flex; 
-    align-items: center; 
-    gap: 1rem; 
+/* ── Connection Controls ───────────────────────────────── */
+.connection-group {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
 }
 
 .status-badge {
-    padding: 0.4rem 1rem;
-    border-radius: 20px;
-    font-size: 0.82rem;
+    padding: 0.35rem 0.9rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.05em;
+    transition: all 0.3s var(--ease-out);
 }
-.status-badge.disconnected { 
-    background: rgba(255,255,255,0.03); 
-    color: var(--text-muted); 
-    border: 1px solid rgba(255,255,255,0.05); 
+.status-badge.disconnected {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-muted);
+    border: 1px solid rgba(255, 255, 255, 0.06);
 }
-.status-badge.connected { 
-    background: rgba(16, 185, 129, 0.08); 
-    color: var(--success); 
-    border: 1px solid rgba(16, 185, 129, 0.3); 
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.05);
+.status-badge.connected {
+    background: var(--success-subtle);
+    color: var(--success);
+    border: 1px solid rgba(48, 209, 88, 0.2);
 }
 
-/* Premium Buttons */
+/* ── Buttons — pill-shaped, refined ────────────────────── */
 .btn {
     font-family: var(--font);
-    padding: 0.55rem 1.4rem;
+    padding: 0.5rem 1.3rem;
     border: 1px solid transparent;
-    border-radius: 8px;
-    font-weight: 700;
-    font-size: 0.85rem;
+    border-radius: var(--radius-pill);
+    font-weight: 600;
+    font-size: 0.82rem;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    transition:
+        all 0.25s var(--ease-out);
+    letter-spacing: 0.01em;
+    user-select: none;
+    outline: none;
 }
-.btn:disabled { 
-    opacity: 0.3; 
-    cursor: not-allowed; 
+.btn:focus-visible {
+    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.4);
+}
+.btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
     box-shadow: none !important;
     transform: none !important;
 }
-.btn.primary { 
-    background: var(--accent); 
-    color: #04060a; 
-    box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
-}
-.btn.primary:not(:disabled):hover { 
-    background: var(--accent-hover); 
-    box-shadow: 0 0 22px rgba(0, 240, 255, 0.4);
-    transform: translateY(-1px); 
-}
-.btn.secondary { 
-    background: rgba(255,255,255,0.04); 
-    color: var(--text-main); 
-    border: 1px solid rgba(255,255,255,0.06); 
-}
-.btn.secondary:not(:disabled):hover { 
-    background: rgba(255,255,255,0.08); 
-    border-color: rgba(255,255,255,0.12);
-}
-.btn.danger { 
-    background: rgba(255, 42, 95, 0.1); 
-    color: var(--magenta); 
-    border: 1px solid rgba(255, 42, 95, 0.3);
-}
-.btn.danger:not(:disabled):hover { 
-    background: var(--magenta); 
+
+/* Primary — filled accent */
+.btn.primary {
+    background: var(--accent);
     color: #fff;
-    box-shadow: 0 0 15px rgba(255, 42, 95, 0.3);
+}
+.btn.primary:not(:disabled):hover {
+    background: var(--accent-hover);
     transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(10, 132, 255, 0.3);
 }
-.btn.small { 
-    padding: 0.35rem 0.8rem; 
-    font-size: 0.75rem; 
-    border-radius: 6px;
-}
-.full-width { 
-    width: 100%; 
-    margin-top: 1rem; 
+.btn.primary:not(:disabled):active {
+    transform: translateY(0);
+    box-shadow: none;
 }
 
-/* Dashboard Grid Layout (Clean columns) */
+/* Secondary — ghost / subtle */
+.btn.secondary {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-main);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.btn.secondary:not(:disabled):hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+/* Danger */
+.btn.danger {
+    background: var(--danger-subtle);
+    color: var(--danger);
+    border: 1px solid rgba(255, 69, 58, 0.2);
+}
+.btn.danger:not(:disabled):hover {
+    background: var(--danger);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(255, 69, 58, 0.25);
+}
+.btn.danger:not(:disabled):active {
+    transform: translateY(0);
+}
+
+/* Size variants */
+.btn.small {
+    padding: 0.3rem 0.75rem;
+    font-size: 0.72rem;
+    border-radius: var(--radius-pill);
+}
+.full-width {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+/* ── Dashboard Grid ────────────────────────────────────── */
 .dashboard {
     display: grid;
     grid-template-columns: 280px 1fr 370px;
@@ -228,125 +288,259 @@ h3 {
     align-items: stretch;
 }
 
-/* Telemetry Cards with Colored Accent Borders */
+/* ── Telemetry Metrics Grid ────────────────────────────── */
 .metrics-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 0.8rem;
     margin-bottom: 1.2rem;
 }
+
 .metric-card {
-    background: rgba(0,0,0,0.22);
-    padding: 1.2rem;
-    border-radius: 12px;
+    background: var(--card-bg);
+    padding: 1.1rem 1.2rem;
+    border-radius: var(--radius-sm);
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
-    border: 1px solid rgba(255,255,255,0.02);
-    transition: all 0.25s;
+    gap: 0.35rem;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    transition:
+        background 0.3s var(--ease-out),
+        transform 0.3s var(--ease-out),
+        box-shadow 0.3s var(--ease-out);
     position: relative;
     overflow: hidden;
 }
 .metric-card:hover {
-    background: rgba(0,0,0,0.3);
-    transform: translateY(-1px);
+    background: var(--card-bg-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
-/* Glowing Top Bars on Metrics */
-.metric-card:nth-child(1) { border-top: 2.5px solid var(--accent); }
-.metric-card:nth-child(2) { border-top: 2.5px solid var(--warning); }
-.metric-card:nth-child(3) { border-top: 2.5px solid var(--indigo); }
-.metric-card:nth-child(4) { border-top: 2.5px solid var(--success); }
+/* Left accent bar on metric cards (replaces top border) */
+.metric-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--text-muted);
+    opacity: 0.5;
+    transition: opacity 0.3s var(--ease-out);
+}
+.metric-card:hover::before {
+    opacity: 0.8;
+}
 
-/* Fault active overrides top bar to magenta alarm colors */
+.metric-card:nth-child(1)::before { background: var(--accent); }
+.metric-card:nth-child(2)::before { background: var(--warning); }
+.metric-card:nth-child(3)::before { background: var(--indigo); }
+.metric-card:nth-child(4)::before { background: var(--success); }
+
+/* Fault override — left bar turns red */
+.metric-card:has(.health-val.fault)::before {
+    background: var(--danger);
+    opacity: 1;
+}
 .metric-card:has(.health-val.fault) {
-    border-top-color: var(--magenta);
-    box-shadow: 0 0 15px rgba(255, 42, 95, 0.06);
+    background: var(--danger-subtle);
+    border-color: rgba(255, 69, 58, 0.1);
 }
 
-.metric-card .label { 
-    color: var(--text-muted); 
-    font-size: 0.72rem; 
-    text-transform: uppercase; 
-    letter-spacing: 1px; 
+/* Metric labels & values */
+.metric-card .label {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
     font-weight: 600;
+    padding-left: 0.6rem;
 }
-.metric-card .value { 
-    font-size: 1.8rem; 
-    font-weight: 700; 
-    font-family: 'Outfit', monospace;
+.metric-card .value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    padding-left: 0.6rem;
 }
-.metric-card .value small { 
-    font-size: 0.95rem; 
-    color: var(--text-muted); 
-    margin-left: 1px;
+.metric-card .value small {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-left: 2px;
 }
 
+/* State & health value colours */
 .state-val { color: var(--text-main); }
-.state-val.moving { 
-    color: var(--accent); 
-    animation: textGlowPulse 1.5s infinite; 
+.state-val.moving {
+    color: var(--accent);
+    animation: subtlePulse 2s ease-in-out infinite;
 }
 .health-val.ok { color: var(--success); }
-.health-val.fault { 
-    color: var(--magenta); 
-    animation: textGlowPulseRed 1.2s infinite;
+.health-val.fault {
+    color: var(--danger);
+    animation: subtlePulse 1.5s ease-in-out infinite;
 }
 
+/* Smooth, non-flashy pulse — just gentle opacity */
+@keyframes subtlePulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.65; }
+}
+
+/* Legacy keyframe names kept so nothing breaks */
 @keyframes textGlowPulse {
-    0% { filter: drop-shadow(0 0 1px var(--accent-glow)); opacity: 1; }
-    50% { filter: drop-shadow(0 0 6px var(--accent-glow)); opacity: 0.85; }
-    100% { filter: drop-shadow(0 0 1px var(--accent-glow)); opacity: 1; }
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.7; }
 }
 @keyframes textGlowPulseRed {
-    0% { filter: drop-shadow(0 0 1px rgba(255, 42, 95, 0.2)); opacity: 1; }
-    50% { filter: drop-shadow(0 0 8px rgba(255, 42, 95, 0.6)); opacity: 0.8; }
-    100% { filter: drop-shadow(0 0 1px rgba(255, 42, 95, 0.2)); opacity: 1; }
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.7; }
 }
 
-/* Main Dashboard Panel */
+/* ── Main View Panel ───────────────────────────────────── */
 .main-view {
-    border-top: 2px solid var(--accent);
+    border-top: none;
+    /* Clean panel — accent bar removed in favour of consistent glass style */
 }
 
-/* Technical Scrolling Terminal Panel at Page Bottom */
+/* ── Console Panel ─────────────────────────────────────── */
 .console-panel {
     display: flex;
     flex-direction: column;
     gap: 0.8rem;
     height: 220px;
-    background: rgba(9, 11, 16, 0.85);
+    background: rgba(26, 26, 30, 0.9);
 }
+
+/* ── Scrollbar — thin, auto-fade style ─────────────────── */
 .console-body::-webkit-scrollbar,
 .device-list::-webkit-scrollbar {
-    width: 6px;
+    width: 5px;
 }
 .console-body::-webkit-scrollbar-track,
 .device-list::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
+    background: transparent;
 }
 .console-body::-webkit-scrollbar-thumb,
 .device-list::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
 }
 .console-body::-webkit-scrollbar-thumb:hover,
 .device-list::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.2);
 }
 
-/* Responsive Overrides */
+/* Global scrollbar refinement */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+/* Firefox scrollbar */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+}
+
+/* ── Form Elements ─────────────────────────────────────── */
+input[type="text"],
+input[type="number"],
+select {
+    font-family: var(--font);
+    font-size: 0.85rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.75rem;
+    color: var(--text-main);
+    outline: none;
+    transition:
+        border-color 0.25s var(--ease-out),
+        box-shadow 0.25s var(--ease-out),
+        background 0.25s var(--ease-out);
+}
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus {
+    border-color: rgba(10, 132, 255, 0.5);
+    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.15);
+    background: rgba(255, 255, 255, 0.07);
+}
+
+/* Range / Slider */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg-elevated);
+    cursor: pointer;
+    transition: box-shadow 0.2s var(--ease-out);
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+    box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.2);
+}
+input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg-elevated);
+    cursor: pointer;
+}
+
+/* ── Utility: Selection colour ─────────────────────────── */
+::selection {
+    background: rgba(10, 132, 255, 0.35);
+    color: #fff;
+}
+
+/* ── Responsive Overrides ──────────────────────────────── */
 @media (max-width: 1200px) {
-    .dashboard { 
-        grid-template-columns: 1fr; 
+    .dashboard {
+        grid-template-columns: 1fr;
     }
-    .metrics-grid { 
-        grid-template-columns: 1fr 1fr; 
+    .metrics-grid {
+        grid-template-columns: 1fr 1fr;
     }
 }
 @media (max-width: 640px) {
-    .metrics-grid { 
-        grid-template-columns: 1fr; 
+    body {
+        padding: 0.75rem;
+    }
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+    .glass-panel {
+        border-radius: var(--radius-md);
+        padding: 1.1rem;
+    }
+    .btn {
+        padding: 0.45rem 1rem;
+        font-size: 0.78rem;
     }
 }
