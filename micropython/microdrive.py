@@ -45,7 +45,7 @@ _MASK_HARD_CAL   = 1 << 5
 _MASK_RAM_ONLY   = 1 << 6
 
 # Reply timeout (ms) — optimized for fast RP2040 turnaround (active node replies in ~2.7ms)
-_REPLY_TIMEOUT_MS = 5
+_REPLY_TIMEOUT_MS = 8
 
 
 # ─── Status Reply Container ──────────────────────────────────────────────────

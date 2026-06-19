@@ -25,7 +25,7 @@ while True:
         sid = req.get("id", 0)
         
         if cmd == "scan":
-            # Scan full range of IDs 0-253 (extremely fast now with 15ms timeout)
+            # Scan full range of IDs 0-127 (extremely fast now with 15ms timeout)
             servos = bus.scan()
             send_response({"res": "scan", "data": [s[0] for s in servos]})
         elif cmd == "move":

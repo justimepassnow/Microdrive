@@ -12,12 +12,7 @@
 // Default to 48MHz, since SystemInit configures it to 48MHz.
 uint32_t SystemCoreClock = 48000000U;
 
-#define CURRENT_SAMPLE_MIN_PULSE_TICKS 100
-#define CURRENT_SAMPLE_ADVANCE_TICKS   20
 
-volatile uint16_t current_sample_adc = 0;
-volatile uint8_t current_sample_valid = 0;
-volatile uint16_t current_sample_trigger_tick = 0;
 
 // Logging Configuration (Set to 0 for silent multi-servo production daisy-chaining)
 #define DEBUG_LOG 0
@@ -240,7 +235,7 @@ void uart_init(void) {
     // Configure NVIC for USART1
     NVIC_InitTypeDef NVIC_InitStruct;
     NVIC_InitStruct.NVIC_IRQChannel = USART1_IRQn;
-    NVIC_InitStruct.NVIC_IRQChannelPriority = 1;
+    NVIC_InitStruct.NVIC_IRQChannelPriority = 0; // Set to highest priority to prevent overrun during SysTick ADC loop
     NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStruct);
 
@@ -364,46 +359,9 @@ static inline uint16_t adc_read(uint8_t channel) {
     return value;
 }
 
-static uint16_t motor_current_sample_trigger_tick(uint32_t arr_period, uint32_t ccr2, uint32_t ccr3) {
-    uint32_t pulse_width = 0;
-    uint32_t sample_target = 0;
-
-    if (arr_period == 0) {
-        return 0;
-    }
-
-    if (ccr3 >= arr_period || ccr2 >= arr_period) {
-        // Slow decay / brake mode: active pulse ends at the timer rollover.
-        uint32_t inactive_ccr = (ccr3 >= arr_period) ? ccr2 : ccr3;
-        if (inactive_ccr >= arr_period) {
-            return 0;
-        }
-
-        pulse_width = arr_period - inactive_ccr;
-        sample_target = arr_period - (pulse_width / 2);
-    } else {
-        // Fast decay / coast mode: active pulse starts at the timer rollover.
-        pulse_width = (ccr3 == 0) ? ccr2 : ccr3;
-        sample_target = pulse_width / 2;
-    }
-
-    if (pulse_width <= CURRENT_SAMPLE_MIN_PULSE_TICKS) {
-        return 0;
-    }
-
-    return (sample_target > CURRENT_SAMPLE_ADVANCE_TICKS) ? (sample_target - CURRENT_SAMPLE_ADVANCE_TICKS) : 0;
-}
-
-static void motor_update_current_sample_trigger(uint32_t arr_period) {
-    uint16_t tick = motor_current_sample_trigger_tick(arr_period, TIM1->CCR2, TIM1->CCR3);
-    current_sample_trigger_tick = tick;
-    TIM1->CCR1 = tick;
-}
-
 static void motor_set_pwm_pair(uint32_t arr_period, uint32_t ccr3, uint32_t ccr2) {
     TIM_SetCompare3(TIM1, ccr3);
     TIM_SetCompare2(TIM1, ccr2);
-    motor_update_current_sample_trigger(arr_period);
 }
 
 volatile int32_t latest_current_ma = 0;
@@ -411,26 +369,19 @@ volatile int32_t latest_current_ma = 0;
 static inline int32_t update_current_ma(void) {
     static int32_t filtered_current_q8 = -1;
 
-    // Use asynchronous current sample if valid, otherwise fallback to synchronous sample
-    uint16_t raw_adc = current_sample_valid ? current_sample_adc : adc_read(ADC_Channel_5);
-    current_sample_valid = 0; // Reset flag for next cycle
+    // Perform a single synchronous ADC read (incorporates settling dummy read internally if channel changed)
+    uint16_t raw_adc = adc_read(ADC_Channel_5);
     
-    // Apply baseline offset calibration, with a piecewise smooth transition
-    // to preserve a clean 0mA reading at zero-current baseline while keeping
-    // the +17 hardware offset derived from the 4-point CC bench supply calibration.
+    // Apply baseline offset calibration
     int32_t corrected_raw = (int32_t)raw_adc - zero_current_offset_adc;
     if (corrected_raw < 0) {
         corrected_raw = 0;
-    } else if (corrected_raw <= 17) {
-        corrected_raw = 2 * corrected_raw; // Smoothly ramp up from 0 to 34
-    } else {
-        corrected_raw = corrected_raw + 17; // Apply the +17 offset for active currents
     }
     
     // Scale standard integer calculation directly to Q8 format
-    // Multiplier (384041 >> 10) derived from physical dummy-load calibration (Slope = 1.465 mA/count)
+    // Multiplier (387973 >> 10) calibrated using DC resistor test (Slope = 1.480 mA/count)
     // Use unsigned 32-bit multiply to avoid signed overflow, then cast back.
-    int32_t current_ma_q8 = (int32_t)(((uint32_t)corrected_raw * 384041U) >> 10);
+    int32_t current_ma_q8 = (int32_t)(((uint32_t)corrected_raw * 387973U) >> 10);
     
     if (filtered_current_q8 < 0) {
         filtered_current_q8 = current_ma_q8;
@@ -538,6 +489,13 @@ void USART1_IRQHandler(void) {
     static uint8_t rx_params[64];
     static uint8_t rx_param_count = 0;
     static uint8_t target_param_count = 0;
+
+    static uint32_t last_rx_time = 0;
+    uint32_t now = millis();
+    if (now - last_rx_time > 5) {
+        rx_state = RX_STATE_HEADER1;
+    }
+    last_rx_time = now;
 
     if (USART_GetITStatus(USART1, USART_IT_RXNE) != RESET) {
         uint8_t c = (uint8_t)USART_ReceiveData(USART1);
@@ -718,16 +676,7 @@ void USART1_IRQHandler(void) {
     }
 }
 
-void TIM1_CC_IRQHandler(void) {
-    if (TIM_GetITStatus(TIM1, TIM_IT_CC1) != RESET) {
-        TIM_ClearITPendingBit(TIM1, TIM_IT_CC1);
-        TIM_ITConfig(TIM1, TIM_IT_CC1, DISABLE); // Disable till next 1ms task request
-
-        // Sample at the PWM midpoint without busy-waiting in the 1 kHz task.
-        current_sample_adc = adc_read(ADC_Channel_5);
-        current_sample_valid = 1;
-    }
-}
+// TIM1 Capture Compare handler removed
 
 // PID Controller Loop
 static inline void pid_update(uint32_t arr_period) {
@@ -895,11 +844,7 @@ static inline void one_ms_task(uint32_t arr_period) {
     
     pid_update(arr_period);
 
-    // Request a single midpoint-synchronized current sample for the next 1ms cycle
-    if (current_sample_trigger_tick > 0) {
-        TIM_ClearITPendingBit(TIM1, TIM_IT_CC1);
-        TIM_ITConfig(TIM1, TIM_IT_CC1, ENABLE);
-    }
+    // Midpoint current sampling trigger removed
 }
 
 // Telemetry output logger
@@ -1000,11 +945,10 @@ int main(void) {
     // 6. Initialize TIM1 CH3 and CH2 output channels
     TIM_OCStructInit(&TIM_OCInitStruct);
     TIM_OCInitStruct.TIM_OCMode       = TIM_OCMode_Timing;
-    TIM_OCInitStruct.TIM_OutputState  = TIM_OutputState_Disable;
+    TIM_OCInitStruct.TIM_OutputState  = TIM_OutputState_Enable;
     TIM_OCInitStruct.TIM_Pulse        = 0;
     TIM_OCInitStruct.TIM_OCPolarity   = TIM_OCPolarity_High;
     TIM_OCInitStruct.TIM_OCIdleState  = TIM_OCIdleState_Reset;
-    TIM_OC1Init(TIM1, &TIM_OCInitStruct); // Channel 1 (CC1 current-sample trigger)
     TIM_OC3Init(TIM1, &TIM_OCInitStruct); // Channel 3 (PA6)
     TIM_OC2Init(TIM1, &TIM_OCInitStruct); // Channel 2 (PA8)
 
@@ -1013,14 +957,6 @@ int main(void) {
     TIM_OCInitStruct.TIM_OCIdleState  = TIM_OCIdleState_Set;
     TIM_OC3Init(TIM1, &TIM_OCInitStruct); // Channel 3 (PA6)
     TIM_OC2Init(TIM1, &TIM_OCInitStruct); // Channel 2 (PA8)
-
-    // Configure NVIC for TIM1 CC1 current sampling interrupt
-    NVIC_InitTypeDef NVIC_TIM1_CC_InitStruct;
-    NVIC_TIM1_CC_InitStruct.NVIC_IRQChannel = TIM1_CC_IRQn;
-    NVIC_TIM1_CC_InitStruct.NVIC_IRQChannelPriority = 2;
-    NVIC_TIM1_CC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
-    NVIC_Init(&NVIC_TIM1_CC_InitStruct);
-    TIM_ITConfig(TIM1, TIM_IT_CC1, ENABLE);
 
     // 7. Configure pin AF multiplexing
     GPIO_PinAFConfig(GPIOA, GPIO_PinSource6, GPIO_AF_4);
@@ -1070,7 +1006,7 @@ int main(void) {
 
     // 13. Enable 1ms SysTick timekeeping interrupt and PID Loop
     SysTick_Config(SystemCoreClock / 1000);
-    NVIC_SetPriority(SysTick_IRQn, 0);
+    NVIC_SetPriority(SysTick_IRQn, 1); // Set to priority 1 (lower than USART1) to allow preemptive serial reading
 
     // 14. Enable Independent Watchdog (IWDG) — ~500ms timeout, auto-resets MCU if main loop hangs
     // IWDG->KR  = 0x5555;   // Unlock prescaler and reload registers

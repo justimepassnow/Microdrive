@@ -178,7 +178,7 @@
         if (!isConnected) return;
         servos = [];
         isScanning = true;
-        addLog('sys', 'Broadcasting discovery ping (IDs 0-253) at 250000 baud...');
+        addLog('sys', 'Broadcasting discovery ping (IDs 0-127) at 250000 baud...');
         sendCommand({ cmd: 'scan' });
     }
 

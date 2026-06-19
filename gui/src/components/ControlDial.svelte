@@ -415,9 +415,9 @@
                     type="range" 
                     min="0" 
                     max="360" 
-                    bind:value={targetAngle} 
+                    value={targetAngle} 
                     disabled={!isConnected}
-                    oninput={() => sendThrottledMove(targetAngle)}
+                    oninput={(e) => { targetAngle = parseInt(e.target.value, 10); sendThrottledMove(targetAngle); }}
                 />
                 <div class="slider-fill" style="width: {(targetAngle / 360) * 100}%"></div>
             </div>
@@ -434,9 +434,9 @@
                     min="0" 
                     max="1000" 
                     step="10"
-                    bind:value={targetVelocity} 
+                    value={targetVelocity} 
                     disabled={!isConnected}
-                    oninput={() => sendThrottledMove(targetAngle)}
+                    oninput={(e) => { targetVelocity = parseInt(e.target.value, 10); sendThrottledMove(targetAngle); }}
                 />
                 <div class="slider-fill velocity-fill" style="width: {(targetVelocity / 1000) * 100}%"></div>
             </div>
@@ -454,9 +454,9 @@
                     min="0" 
                     max={currentLimit} 
                     step="10"
-                    bind:value={targetCurrent} 
+                    value={targetCurrent} 
                     disabled={!isConnected}
-                    oninput={() => sendThrottledMove(targetAngle)}
+                    oninput={(e) => { targetCurrent = parseInt(e.target.value, 10); sendThrottledMove(targetAngle); }}
                 />
                 <div class="slider-fill current-fill" style="width: {targetCurrent === 0 ? 0 : (targetCurrent / currentLimit) * 100}%"></div>
             </div>
