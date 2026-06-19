@@ -115,7 +115,7 @@ Pico GP4 (TX) ──[1kΩ]──┐
 Pico GP5 (RX) ──────────┘
 ```
 
-**Check common ground.** The Pico GND and the μDrive board GND must be directly connected. Floating ground = the receiver can't distinguish high from low.
+**Check common ground.** The MCU GND and the μDrive board GND must be directly connected. Floating ground = the receiver can't distinguish high from low.
 
 **Check servo ID.** Factory default ID is `0`. If your code is sending to ID `1`, the servo silently ignores it. Test with a broadcast:
 
@@ -321,7 +321,7 @@ Re-flash the firmware. The `flash_load_config()` function checks for a `0xDEADBE
 
 ### Multiple servos on the same bus cause garbled replies
 
-If two servos have the **same ID**, both will try to reply simultaneously, corrupting each other's packets. Every servo on the bus must have a unique ID (0–253).
+If two servos have the **same ID**, both will try to reply simultaneously, corrupting each other's packets. Every servo on the bus must have a unique ID (0–127).
 
 To fix, disconnect all servos except one, assign it a unique ID, reconnect, and repeat:
 

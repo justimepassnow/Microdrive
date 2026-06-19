@@ -57,7 +57,7 @@ All communication uses a binary packet format:
 | Field | Size | Description |
 |---|---|---|
 | Header | 2 bytes | Always `0xFF 0xFF` |
-| ID | 1 byte | Target servo ID (`0`–`253`), or `0xFE` for broadcast |
+| ID | 1 byte | Target servo ID (`0`–`127`), or `0xFE` for broadcast |
 | Length | 1 byte | Number of bytes following: `Instruction + Params + Checksum` |
 | Instruction | 1 byte | Command opcode (see below) |
 | Params | 0–N bytes | Instruction-specific payload |
@@ -162,7 +162,7 @@ Reads the full configuration from the servo.
 
 ### Status Reply Packet (11 bytes)
 
-Sent in response to POLL, CONFIG, or CLEAR_ERROR commands:
+Sent in response to POLL or CONFIG commands:
 
 ```text
 ┌──────┬──────┬──────┬──────┬─────────────┬───────────────────────────────────┬──────────┐
@@ -260,6 +260,23 @@ pid_output = (p_term + i_term + d_term) >> 24
 | **Soft limit** (admittance yield) | `current_limit` (configurable, default 1000 mA) | Dynamically clamps PWM duty cycle. Allows the motor to yield compliantly. |
 | **Hard fault** | 2000 mA sustained for ≥ 50 ms | Latching fault — motor is disabled. Must be cleared with `CLEAR_ERROR` command. |
 
+#### Soft Current Limiting (Admittance Yield Loop)
+
+To prevent motor/driver overheating and enable compliant backdriving (force limiting), the controller implements a dynamic current-clamping algorithm in the 1 ms control loop:
+
+1. **Dynamic PWM Clamping**:
+   - Every 1 ms, if the filtered current `current_ma` exceeds `active_current_limit`, the allowable PWM duty cycle limit (`pwm_clamp`) is decremented:
+     $$\text{pwm\_clamp} \leftarrow \max(0, \text{pwm\_clamp} - 20)$$
+     This triggers the `yield_active` compliance flag.
+   - If the current is below the threshold, the clamp slowly recovers toward the full timer period (`arr_period`):
+     $$\text{pwm\_clamp} \leftarrow \min(\text{arr\_period}, \text{pwm\_clamp} + 5)$$
+     Once `pwm_clamp` reaches `arr_period`, `yield_active` is cleared.
+   - The PID output is then clamped to $[-\text{pwm\_clamp}, \text{pwm\_clamp}]$.
+
+2. **Decay Mode Transition (Coast vs. Brake)**:
+   - **Stiff Mode (`yield_active` is false)**: The driver operates in **slow decay (brake mode)**, where inactive outputs are held high. This provides maximum holding stiffness and positioning precision.
+   - **Yield/Compliance Mode (`yield_active` is true)**: The driver switches to **fast decay (coast mode)**, pulsing only one phase while leaving the other at 0. This reduces braking torque and allows the shaft to yield/backdrive smoothly under external load.
+
 ### Motor Arming
 
 The motor is **disarmed at boot**. It will not drive the motor until the first valid `CONTROL` packet is received. This prevents unexpected motion on power-up.
@@ -274,11 +291,11 @@ At startup, the firmware reads 16 samples from the current sense ADC (with the m
 
 Configuration is stored in **Flash page 15** (the last 1 KB page of the 16 KB flash), starting at address `0x08003C00`. A magic word (`0xDEADBEEF`) validates stored data.
 
-### ServoConfig Structure (26 bytes, packed)
+### ServoConfig Structure (30 bytes, packed)
 
 | Offset | Field | Type | Default | Description |
 |---|---|---|---|---|
-| 0 | `servo_id` | uint8 | `0` | Bus address (0–253) |
+| 0 | `servo_id` | uint8 | `0` | Bus address (0–127) |
 | 1 | `direction_invert` | uint8 | `0` | Motor direction (0 = normal, 1 = inverted) |
 | 2 | `min_angle` | uint16 | `0` | Minimum angle limit (degrees) |
 | 4 | `max_angle` | uint16 | `180` | Maximum angle limit (degrees) |
@@ -408,10 +425,11 @@ The project uses MindMotion's Standard Peripheral Library (HAL) for hardware abs
 
 | IRQ | Handler | Priority | Purpose |
 |---|---|---|---|
-| SysTick | `SysTick_Handler` | Default | 1 ms PID loop, trajectory ramping, overcurrent protection |
+| SysTick | `SysTick_Handler` | 0 | 1 ms PID loop, trajectory ramping, overcurrent protection |
 | USART1 | `USART1_IRQHandler` | 1 | RX interrupt-driven binary packet parser |
+| TIM1_CC | `TIM1_CC_IRQHandler` | 2 | Midpoint-synchronized current sample acquisition |
 
-The PID loop runs entirely within the SysTick ISR, ensuring deterministic 1 ms timing regardless of main-loop activity. The UART packet parser is fully interrupt-driven using a state machine, with no blocking reads in the main loop.
+The PID loop runs entirely within the SysTick ISR (highest priority), ensuring deterministic 1 ms timing regardless of main-loop activity. The UART packet parser is fully interrupt-driven using a state machine, and the motor current is sampled asynchronously at the PWM midpoint using `TIM1` Channel 1 (CC1) to eliminate CPU busy-waiting.
 
 ---
 

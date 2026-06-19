@@ -47,7 +47,7 @@ print(status)  # <ServoStatus angle=180° current=42mA>
 ## ServoBus
 
 ```python
-ServoBus(uart, reply_timeout_ms=5)
+ServoBus(uart, dir_pin=None, reply_timeout_ms=5)
 ```
 
 Manages the shared half-duplex UART bus for one or more Microdrives.
@@ -57,6 +57,7 @@ Manages the shared half-duplex UART bus for one or more Microdrives.
 | Parameter | Type | Default | Description |
 |---|---|---|---|
 | `uart` | `machine.UART` | *(required)* | Pre-configured UART instance at **250,000 baud, 8N1**. TX pin wired to the servo bus line. |
+| `dir_pin` | `machine.Pin` or `None` | `None` | Optional direction control pin (active-high = transmit). Set to `None` if the UART handles half-duplex natively or if using a shared open-drain TX/RX line. |
 | `reply_timeout_ms` | `int` | `5` | Milliseconds to wait for a servo reply before giving up. The firmware replies in ~2.7 ms on average. |
 
 ### Methods
@@ -439,7 +440,7 @@ Returned by `poll()`, `move_and_wait()`, `wait_until_done()`, and configuration 
 | `current_ma` | `int` | Motor current draw in milliamps |
 | `is_moving` | `bool` | `True` if the servo is actively tracking a target |
 | `overcurrent` | `bool` | `True` if an over-current fault is active |
-| `is_holding` | `bool` | `True` if the servo is holding position (arrived at target) |
+| `is_holding` | `bool` | `True` if admittance yield mode is active (motor is complying/backdriving due to current limiting) |
 | `has_fault` | `bool` | `True` if **any** fault flag is active (currently = `overcurrent`) |
 | `servo_id` | `int` | Bus address of the servo that replied |
 | `instruction` | `int` | Echoed instruction byte from the request |
@@ -548,7 +549,7 @@ MicroPython MCU                             μDrive
 ```
 
 > [!TIP]
-> - The **1kΩ resistor** acts as an isolation resistor between the TX and RX/data line on the MCU side. When the MCU transmits a logic low, it pulls the data line down through the resistor. When the servo transmits, the resistor protects the Pico's TX pin if it remains driven high.
+> - The **1kΩ resistor** acts as an isolation resistor between the TX and RX/data line on the MCU side. When the MCU transmits a logic low, it pulls the data line down through the resistor. When the servo transmits, the resistor protects the microcontroller's TX pin if it remains driven high.
 > - The μDrive board has an onboard **10kΩ pull-up resistor** on the Data Bus, so no external pull-up is required. An external pull-up (e.g., 4.7kΩ to 3.3V) is only needed if your custom master or bus setup lacks one.
 
 ---
@@ -569,7 +570,7 @@ The `micropython/` folder includes several ready-to-use scripts:
 
 ### Running Utility Scripts
 
-1. Copy `microdrive.py` and the desired script onto the Pico.
+1. Copy `microdrive.py` and the desired script onto the microcontroller.
 2. Connect the servo bus and power supply.
 3. Open a serial terminal (Thonny, `mpremote`, PuTTY) and run:
 

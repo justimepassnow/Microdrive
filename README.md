@@ -120,6 +120,7 @@ Microdrive is actively under development. Current focus areas include:
 * **🐛 EMI Stability:** The board occasionally stops responding to commands during massive current spikes. This is likely due to electromagnetic interference (EMI) crashing the MCU or bus. Hardware/software filtering improvements are being investigated.
 * **🚀 Better I2C Encoder Support:** Writing the software drivers to fully utilize the AS5600 footprint.
 * **⚙️ Control Optimization:** Improving the efficiency of the communication protocol and fine-tuning the torque and velocity control loops.
+* **🔌 Arduino Compatibility:** Development of Arduino/C++ compatible driver libraries to control the servo network from Arduino-compatible microcontrollers.
 
 ---
 

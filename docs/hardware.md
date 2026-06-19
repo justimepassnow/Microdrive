@@ -14,7 +14,7 @@ Microdrive ships as **two PCB variants**. Both share the same MCU, voltage regul
 | **Form Factor** | Generic — attach to any DC brushed motor | Drop-in replacement for MG996R servo |
 | **Operating Voltage** | Up to 18V max | Up to 7.5V max |
 | **Current Rating** | 5A continuous | 1.5A continuous / 3A peak |
-| **Schematic** | `servo_pcb.kicad_sch` | `servo_pcb-mg99x.kicad_sch` |
+| **Schematic** | `servo_pcb.kicad_sch` | `servo_pcb_mg99x.kicad_sch` |
 | **PCB Layout** | `servo_pcb.kicad_pcb` | `servo_pcb_mg99x.kicad_pcb` |
 
 > [!TIP]

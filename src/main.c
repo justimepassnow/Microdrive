@@ -35,7 +35,7 @@ typedef enum {
 
 // Configuration structure matching implementation specification (26 bytes)
 typedef struct __attribute__((packed)) {
-    uint8_t  servo_id;        // 0-253, default: 0
+    uint8_t  servo_id;        // 0-127, default: 0
     uint8_t  direction_invert;// 0 = normal, 1 = inverted motor direction
     uint16_t min_angle;       // minimum angle, e.g., 45
     uint16_t max_angle;       // maximum angle, e.g., 280

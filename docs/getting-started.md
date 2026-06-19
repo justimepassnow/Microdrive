@@ -13,7 +13,7 @@ A step-by-step guide to flashing the servo board, wiring up a master controller,
 | **Raspberry Pi Pico** | Used first as a programmer, then re-flashed as the master MCU |
 | **μDrive board** | The MM32G0001-based servo controller PCB |
 | **DC motor with potentiometer** | Any brushed DC motor within the driver limits (e.g., ≤ 7.5V / 1.5A for the MG996 board, or ≤ 18V / 5A for the Generic board) |
-| **External power supply** | Suitable voltage for your motor and board (do **not** power the motor from the Pico's 3V3/5V pin) |
+| **External power supply** | Suitable voltage for your motor and board (do **not** power the motor from the microcontroller's 3V3/5V pin) |
 | **Jumper wires** | At least 4 for SWD programming + 3 for the servo bus |
 | **Pull-up resistor** | 1 kΩ – 10 kΩ (4.7 kΩ recommended) for the single-wire data bus |
 | **USB cable** | Micro-USB or USB-C depending on your Pico variant |
@@ -213,7 +213,7 @@ npm run dev
 | **Default servo ID** | Factory-fresh servos start at **ID 0** |
 | **Safety feature** | The motor does **not** start moving until the first `CONTROL` command is received — the H-bridge stays off until then |
 | **Bus wire mode** | The UART uses **PA12 in open-drain mode** for bus sharing; a pull-up resistor is mandatory |
-| **Motor power** | Always use an **external power supply** for the motor — never power it from the Pico's USB rail |
+| **Motor power** | Always use an **external power supply** for the motor — never power it from the microcontroller's USB rail |
 | **Reply timeout** | Default is **5 ms** — the servo firmware replies in ~2.7 ms on average |
 
 ---
