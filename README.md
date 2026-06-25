@@ -32,13 +32,19 @@ A comprehensive documentation suite is available in the [docs](docs/) directory:
 
 μDrive is available in **two PCB variants** sharing the same MCU and logic, but using different motor drivers:
 
-| Feature | Generic Servo Board | MG996 Drop-in Board |
+| Feature | Servo Board | MG996 Drop-in Board |
 |---|---|---|
 | **Motor Driver** | CP2119 | BDR6121H |
-| **Form Factor** | Generic — attach to any DC motor | Drop-in replacement for MG996R servo |
+| **Form Factor** | Standard — attach to any DC motor | Drop-in replacement for MG996R servo |
 | **Operating Voltage** | Up to 18V max | Up to 7.5V max |
 | **Current Rating** | 5A continuous | 1.5A continuous / 3A peak |
 | **PCB Files** | [servo_pcb](PCB/) | [servo_pcb_mg99x](PCB/) |
+
+### Board Layouts
+<p align="center">
+  <img src="docs/images/servo_pcb_front.jpg" alt="Servo Board Front" width="45%" />
+  <img src="docs/images/servo_pcb_back.jpg" alt="Servo Board Back" width="45%" />
+</p>
 
 ### Common Architecture (Both Boards)
 * **Microcontroller:** MindMotion MM32G0001 (32-bit Cortex-M0, 48MHz, 16KB Flash, 2KB RAM)
@@ -59,15 +65,29 @@ The project uses a Master/Slave architecture over a half-duplex UART bus. You si
 * **Arduino/C++:** *Coming soon!*
 
 ### WebGUI Architecture
-```text
-[ Web Browser (Svelte WebGUI) ] 
-       | (Web Serial API)
-       v
-[ Master Microcontroller (Running Python script) ]
-       | (Single-Wire UART)
-       v
-[ μDrive Servo Board ] -> [ DC Motor + Encoder ]
+
+```mermaid
+graph TD
+    Web["<span style='color:#000'>💻 Web Browser<br>(Svelte WebGUI)</span>"] -- "Web Serial API" --> Master["<span style='color:#000'>🧠 Master Microcontroller<br>(Running Python Script)</span>"]
+    Master -- "Single-Wire UART" --> Servo["<span style='color:#000'>⚡ μDrive Servo Board</span>"]
+    Servo --> Motor["<span style='color:#000'>⚙️ DC Motor + Encoder</span>"]
+
+    %% Styling
+    style Web fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    style Master fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px;
+    style Servo fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+    style Motor fill:#efebe9,stroke:#3e2723,stroke-width:2px;
 ```
+
+<br>
+
+### Web GUI
+
+<p align="center">
+  <img src="docs/images/webgui.jpg" alt="μDrive WebGUI Dashboard" width="80%" />
+</p>
+
+<br>
 
 ---
 

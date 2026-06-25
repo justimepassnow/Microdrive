@@ -525,27 +525,52 @@ The servo bus uses a binary packet protocol over half-duplex UART:
 #### Option A: For boards with open-drain UART support (e.g., ESP32)
 If your microcontroller supports native half-duplex UART or allows configuring the TX pin as open-drain, you can connect the TX pin directly to the data bus. No external pull-up is needed because the μDrive PCB already includes an onboard 10kΩ pull-up resistor on the data bus:
 
-```
-ESP32 (Open-Drain TX/RX)                   μDrive
-┌──────────────────┐                   ┌──────────────────┐
-│  TX/RX (Pin 4)   ├───────────────────┤ Data Bus (PA12)  │
-│                  │                   │ (Onboard 10kΩ    │
-│             GND  ├───────────────────┤  pull-up to 3.3V)│
-└──────────────────┘                   └──────────────────┘
+```mermaid
+graph LR
+    subgraph MCU["ESP32 (Open-Drain TX/RX)"]
+        Pin["<span style='color:#000'>TX/RX (Pin 4)</span>"]
+        GND1["<span style='color:#000'>GND</span>"]
+    end
+    subgraph Servo["μDrive Board"]
+        Data["<span style='color:#000'>Data Bus (PA12)<br>(Onboard 10kΩ pull-up)</span>"]
+        GND2["<span style='color:#000'>GND</span>"]
+    end
+    Pin --- Data
+    GND1 --- GND2
+
+    style Pin fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    style Data fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+    style GND1 fill:#efebe9,stroke:#3e2723,stroke-width:2px;
+    style GND2 fill:#efebe9,stroke:#3e2723,stroke-width:2px;
 ```
 
 #### Option B: For boards without open-drain UART support (e.g., Raspberry Pi Pico / RP2040)
 If your board does not support open-drain UART, do **not** tie the TX and RX pins directly together. Instead, connect the RX pin directly to the servo data bus, and connect the TX pin to the RX pin/bus through a **1kΩ isolation resistor**. This protects the TX pin from short circuits when the MCU TX drives the pin high while the servo drives the bus low:
 
-```
-MicroPython MCU                             μDrive
-┌──────────────────┐                   ┌──────────────────┐
-│         GP4 (TX) ├────[ 1kΩ Res ]    │                  │
-│                  │         │         │                  │
-│         GP5 (RX) ├─────────┴─────────┤ Data Bus (PA12)  │
-│                  │                   │ (Onboard 10kΩ    │
-│             GND  ├───────────────────┤  pull-up to 3.3V)│
-└──────────────────┘                   └──────────────────┘
+```mermaid
+graph LR
+    subgraph MCU["MicroPython MCU"]
+        TX["<span style='color:#000'>GP4 (TX)</span>"]
+        RX["<span style='color:#000'>GP5 (RX)</span>"]
+        GND1["<span style='color:#000'>GND</span>"]
+    end
+    subgraph Servo["μDrive Board"]
+        Data["<span style='color:#000'>Data Bus (PA12)<br>(Onboard 10kΩ pull-up)</span>"]
+        GND2["<span style='color:#000'>GND</span>"]
+    end
+    Res["<span style='color:#000'>1kΩ Resistor</span>"]
+
+    TX --- Res
+    RX --- Res
+    RX --- Data
+    GND1 --- GND2
+
+    style TX fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    style RX fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    style Res fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px;
+    style Data fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+    style GND1 fill:#efebe9,stroke:#3e2723,stroke-width:2px;
+    style GND2 fill:#efebe9,stroke:#3e2723,stroke-width:2px;
 ```
 
 > [!TIP]

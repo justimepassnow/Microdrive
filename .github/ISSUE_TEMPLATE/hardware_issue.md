@@ -10,7 +10,7 @@ assignees: ''
 Describe the hardware issue or improvement.
 
 ## Board Variant
-- [ ] Generic Servo Board (CP2119)
+- [ ] Servo Board (CP2119)
 - [ ] MG996 Drop-in Board (BDR6121H)
 - [ ] Both
 

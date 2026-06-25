@@ -27,7 +27,7 @@ What you expected to happen.
 What actually happened.
 
 ## Setup
-- **Board variant:** (Generic Servo Board / MG996 Drop-in)
+- **Board variant:** (Servo Board / MG996 Drop-in)
 - **Motor:** 
 - **Feedback type:** (Potentiometer / AS5600 / other)
 - **Power supply voltage:** 

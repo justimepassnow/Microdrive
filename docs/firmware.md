@@ -202,21 +202,21 @@ Sent in response to READ_CONFIG:
 
 μDrive uses a **position PID controller with velocity trajectory profiling** (ghost target). The entire control loop runs inside the `SysTick_Handler` at a fixed 1 ms interval, guaranteeing deterministic timing even if the main loop is busy sending UART replies.
 
-```text
-                    ┌─────────────┐
-  target_angle ───► │  Trajectory │ ───► ghost_angle_q8
-                    │   Ramping   │        │
-                    └─────────────┘        │
-                                           ▼
-                                    ┌──────────────┐
-       current_angle_q8 ──────────►│  PID          │───► PWM duty
-       (from ADC + filter)         │  Controller   │     (TIM1 CH2/CH3)
-                                    └──────────────┘
-                                           │
-                                    ┌──────▼───────┐
-                                    │  Overcurrent │
-                                    │  Protection  │
-                                    └──────────────┘
+```mermaid
+graph LR
+    TA["<span style='color:#000'>🎯 Target Angle</span>"] --> Traj["<span style='color:#000'>📈 Trajectory Ramping</span>"]
+    Traj -->|"ghost_angle_q8"| PID["<span style='color:#000'>🎛️ PID Controller</span>"]
+    CA["<span style='color:#000'>🔍 Current Angle (q8)<br>(ADC + filter)</span>"] --> PID
+    PID -->|"PWM duty"| TIM["<span style='color:#000'>⚡ PWM Duty<br>(TIM1 CH2/CH3)</span>"]
+    PID --> OCP["<span style='color:#000'>🛡️ Overcurrent Protection</span>"]
+
+    %% Styling
+    style TA fill:#e3f2fd,stroke:#1565c0,stroke-width:2px;
+    style Traj fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px;
+    style PID fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+    style CA fill:#efebe9,stroke:#4e342e,stroke-width:2px;
+    style TIM fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
+    style OCP fill:#ffebee,stroke:#c62828,stroke-width:2px;
 ```
 
 ### Ghost Target (Velocity Profiling)

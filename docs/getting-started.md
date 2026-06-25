@@ -12,7 +12,7 @@ A step-by-step guide to flashing the servo board, wiring up a master controller,
 |---|---|
 | **Raspberry Pi Pico** | Used first as a programmer, then re-flashed as the master MCU |
 | **μDrive board** | The MM32G0001-based servo controller PCB |
-| **DC motor with potentiometer** | Any brushed DC motor within the driver limits (e.g., ≤ 7.5V / 1.5A for the MG996 board, or ≤ 18V / 5A for the Generic board) |
+| **DC motor with potentiometer** | Any brushed DC motor within the driver limits (e.g., ≤ 7.5V / 1.5A for the MG996 board, or ≤ 18V / 5A for the Servo Board) |
 | **External power supply** | Suitable voltage for your motor and board (do **not** power the motor from the microcontroller's 3V3/5V pin) |
 | **Jumper wires** | At least 4 for SWD programming + 3 for the servo bus |
 | **Pull-up resistor** | 1 kΩ – 10 kΩ (4.7 kΩ recommended) for the single-wire data bus |
@@ -55,14 +55,34 @@ Connect these **4 wires** from the Pico to the SWD programming header on the μD
 | **GP2** | **SWCLK** (labeled **C**) | Serial Wire Clock |
 | **GP3** | **SWDIO** (labeled **D**) | Serial Wire Data |
 
-```
-Raspberry Pi Pico (Picoprobe)            μDrive Board
-┌───────────────────┐                    ┌──────────┐
-│  3V3 (pin 36)     ├────────────────────┤ 3.3V     │
-│  GND (pin 38)     ├────────────────────┤ GND      │
-│  GP2 (pin 4)      ├────────────────────┤ C (SWCLK)│
-│  GP3 (pin 5)      ├────────────────────┤ D (SWDIO)│
-└───────────────────┘                    └──────────┘
+```mermaid
+graph LR
+    subgraph Probe["Raspberry Pi Pico (Picoprobe)"]
+        3V3["<span style='color:#000'>3V3 (pin 36)</span>"]
+        GND1["<span style='color:#000'>GND (pin 38)</span>"]
+        GP2["<span style='color:#000'>GP2 (pin 4)</span>"]
+        GP3["<span style='color:#000'>GP3 (pin 5)</span>"]
+    end
+    subgraph Servo["μDrive Board"]
+        V33["<span style='color:#000'>3.3V</span>"]
+        GND2["<span style='color:#000'>GND</span>"]
+        CLK["<span style='color:#000'>C (SWCLK)</span>"]
+        DIO["<span style='color:#000'>D (SWDIO)</span>"]
+    end
+    3V3 --- V33
+    GND1 --- GND2
+    GP2 --- CLK
+    GP3 --- DIO
+
+    style 3V3 fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    style GND1 fill:#efebe9,stroke:#3e2723,stroke-width:2px;
+    style GP2 fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    style GP3 fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+
+    style V33 fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+    style GND2 fill:#efebe9,stroke:#3e2723,stroke-width:2px;
+    style CLK fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+    style DIO fill:#fff3e0,stroke:#e65100,stroke-width:2px;
 ```
 
 ### 1.3 Install the Flashing Tools
@@ -114,16 +134,40 @@ The servo firmware uses **half-duplex single-wire UART** on PA12 (open-drain) at
 
 On boards that do not natively support open-drain half-duplex UART on a single pin (like the Raspberry Pi Pico / RP2040), connect the RX pin directly to the servo data line, and connect the TX pin to the RX pin/bus through a **1kΩ isolation resistor**. No external pull-up is needed since the μDrive PCB already has an onboard 10kΩ pull-up on the data bus.
 
-```
-MicroPython MCU (Pico)                 μDrive Servo Board
-┌──────────────────────┐               ┌──────────────────┐
-│  GP4 (TX) ──[1kΩ]────┐               │                  │
-│                      │               │                  │
-│  GP5 (RX) ───────────┴───────────────┤ Data Bus (PA12)  │
-│  GND  ───────────────────────────────┤ GND              │
-└──────────────────────┘               └──────────────────┘
-                                        External PSU V+ ──→ Servo V+
-                                        External PSU GND ──→ Servo GND (tied to Pico GND)
+```mermaid
+graph LR
+    subgraph MCU["MicroPython MCU (Pico)"]
+        TX["<span style='color:#000'>GP4 (TX)</span>"]
+        RX["<span style='color:#000'>GP5 (RX)</span>"]
+        GND1["<span style='color:#000'>GND</span>"]
+    end
+    subgraph Servo["μDrive Servo Board"]
+        Data["<span style='color:#000'>Data Bus (PA12)<br>(Onboard 10kΩ pull-up)</span>"]
+        GND2["<span style='color:#000'>GND</span>"]
+        VPlus["<span style='color:#000'>Servo V+</span>"]
+    end
+    subgraph PSU["External Power Supply (PSU)"]
+        GND3["<span style='color:#000'>GND</span>"]
+        VOut["<span style='color:#000'>V+</span>"]
+    end
+    Res["<span style='color:#000'>1kΩ  Resistor</span>"]
+
+    TX --- Res
+    RX --- Res
+    RX --- Data
+    GND1 --- GND2
+    GND2 --- GND3
+    VPlus --- VOut
+
+    style TX fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    style RX fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    style Res fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px;
+    style Data fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+    style GND1 fill:#efebe9,stroke:#3e2723,stroke-width:2px;
+    style GND2 fill:#efebe9,stroke:#3e2723,stroke-width:2px;
+    style VOut fill:#ffebee,stroke:#c62828,stroke-width:2px;
+    style GND3 fill:#efebe9,stroke:#3e2723,stroke-width:2px;
+    style VPlus fill:#ffebee,stroke:#c62828,stroke-width:2px;
 ```
 
 > [!IMPORTANT]

@@ -8,17 +8,17 @@
 
 Microdrive ships as **two PCB variants**. Both share the same MCU, voltage regulator, current sensor, firmware, and communication protocol. The only difference is the **motor driver IC** and the resulting form factor.
 
-| | Generic Servo Board | MG996 Drop-in Board |
+| | Servo Board | MG996 Drop-in Board |
 |---|---|---|
 | **Motor Driver** | CP2119 | BDR6121H |
-| **Form Factor** | Generic — attach to any DC brushed motor | Drop-in replacement for MG996R servo |
+| **Form Factor** | Standard — attach to any DC brushed motor | Drop-in replacement for MG996R servo |
 | **Operating Voltage** | Up to 18V max | Up to 7.5V max |
 | **Current Rating** | 5A continuous | 1.5A continuous / 3A peak |
 | **Schematic** | `servo_pcb.kicad_sch` | `servo_pcb_mg99x.kicad_sch` |
 | **PCB Layout** | `servo_pcb.kicad_pcb` | `servo_pcb_mg99x.kicad_pcb` |
 
 > [!TIP]
-> Both boards run identical firmware. Choose the variant that fits your mechanical design — or use the Generic board as a universal motor controller.
+> Both boards run identical firmware. Choose the variant that fits your mechanical design — or use the Servo Board as a universal motor controller.
 
 ---
 
@@ -71,7 +71,7 @@ Microdrive ships as **two PCB variants**. Both share the same MCU, voltage regul
 |---|---|---|---|
 | U1 | TSSOP-20 | MM32G0001 | MCU |
 | U2 | SOT-23 | SL7533-3 | 3.3V LDO Regulator |
-| U3 | SOIC-8 | BDR6121H *(MG996)* / CP2119 *(Generic)* | Motor Driver |
+| U3 | SOIC-8 | BDR6121H *(MG996)* / CP2119 *(Servo Board)* | Motor Driver |
 | U4 | SOT-23-5 | INA180A2 | Current Sense Amplifier |
 | U5 | SOIC-8 | AS5600 | I2C Magnetic Encoder *(optional)* |
 | R1 | 2512 | 0.01Ω | Current Sense Shunt Resistor |
@@ -104,9 +104,9 @@ All hardware design files are located in the [`PCB/`](../PCB/) directory of the 
 
 | File | Description |
 |---|---|
-| `servo_pcb.kicad_sch` | Generic board schematic |
-| `servo_pcb.kicad_pcb` | Generic board PCB layout |
-| `servo_pcb.kicad_pro` | Generic board KiCad project |
+| `servo_pcb.kicad_sch` | Servo Board schematic |
+| `servo_pcb.kicad_pcb` | Servo Board PCB layout |
+| `servo_pcb.kicad_pro` | Servo Board KiCad project |
 | `servo_pcb-mg99x.kicad_sch` | MG996 drop-in board schematic |
 | `servo_pcb_mg99x.kicad_pcb` | MG996 drop-in board PCB layout |
 | `servo_pcb_mg99x.kicad_pro` | MG996 drop-in board KiCad project |
