@@ -1,10 +1,12 @@
+"""
+JSON serial proxy for communicating with Microdrive via USB from Svelte GUI.
+"""
+
 import sys
 import json
-import select
 from machine import UART, Pin
 from microdrive import ServoBus
 
-# Configure UART for the Servo Bus. 
 uart = UART(1, baudrate=250000, tx=Pin(4), rx=Pin(5))
 bus = ServoBus(uart)
 
@@ -18,14 +20,14 @@ log_msg("Microdrive Proxy Started.")
 
 while True:
     line = sys.stdin.readline().strip()
-    if not line: continue
+    if not line:
+        continue
     try:
         req = json.loads(line)
         cmd = req.get("cmd")
         sid = req.get("id", 0)
         
         if cmd == "scan":
-            # Scan full range of IDs 0-127 (extremely fast now with 15ms timeout)
             servos = bus.scan()
             send_response({"res": "scan", "data": [s[0] for s in servos]})
         elif cmd == "move":
@@ -43,7 +45,7 @@ while True:
                     "overcurrent": status.overcurrent
                 }})
             else:
-                send_response({"res": "error", "msg": "Poll Timeout for ID {}".format(sid)})
+                send_response({"res": "error", "msg": f"Poll Timeout for ID {sid}"})
         elif cmd == "read_config":
             cfg = bus.servo(sid).read_config()
             if cfg:
@@ -59,7 +61,7 @@ while True:
                     "adc_per_360": cfg.adc_per_360
                 }})
             else:
-                send_response({"res": "error", "msg": "Config Read Timeout for ID {}".format(sid)})
+                send_response({"res": "error", "msg": f"Config Read Timeout for ID {sid}"})
         elif cmd == "configure":
             params = req.get("params", {})
             bus.servo(sid).configure(**params)

@@ -21,7 +21,7 @@ Usage:
 import struct
 import time
 
-# ─── Protocol Constants ──────────────────────────────────────────────────────
+# Protocol Constants
 
 _HEADER          = b'\xff\xff'
 _BROADCAST_ID    = 0xFE
@@ -48,7 +48,7 @@ _MASK_RAM_ONLY   = 1 << 6
 _REPLY_TIMEOUT_MS = 8
 
 
-# ─── Status Reply Container ──────────────────────────────────────────────────
+# Status Reply Container
 
 class ServoStatus:
     """Parsed status reply from the servo."""
@@ -87,6 +87,7 @@ class ServoStatus:
         return '<ServoStatus {}>'.format(' '.join(parts))
 
 
+# Configuration Reply Container
 class ServoConfigData:
     """Parsed configuration stored in the servo's flash memory."""
 
@@ -150,7 +151,7 @@ def _parse_config_reply(raw):
     return ServoConfigData(*unpacked)
 
 
-# ─── Low-level Packet Helpers ────────────────────────────────────────────────
+# Low-level Packet Helpers
 
 def _checksum(data):
     """Compute protocol checksum: ~(sum of bytes) & 0xFF."""
@@ -197,7 +198,7 @@ def _parse_status_reply(raw):
     return ServoStatus(sid, inst, angle, current_ma, flags)
 
 
-# ─── Fixed-point conversion helpers ──────────────────────────────────────────
+# Fixed-point conversion helpers
 
 def _float_to_q16(value):
     """Convert a float PID gain to Q16 fixed-point (signed int32)."""
@@ -223,7 +224,7 @@ def _pack_u16_le(val):
     return struct.pack('<H', val)
 
 
-# ─── Servo Bus ────────────────────────────────────────────────────────────────
+# Servo Bus Manager
 
 class ServoBus:
     """
@@ -247,7 +248,7 @@ class ServoBus:
         self._dir_pin = dir_pin
         self._timeout_ms = reply_timeout_ms
 
-    # ── Raw TX / RX ──────────────────────────────────────────────────────
+    # Raw TX / RX functions
 
     def _tx_mode(self):
         if self._dir_pin is not None:
@@ -351,7 +352,7 @@ class ServoBus:
             return self._receive_reply(expected_len=expected_len)
         return None
 
-    # ── High-level bus commands ───────────────────────────────────────────
+    # High-level bus commands
 
     def servo(self, servo_id):
         """
@@ -410,7 +411,7 @@ class ServoBus:
         return found
 
 
-# ─── Servo Handle ─────────────────────────────────────────────────────────────
+# Servo Handle
 
 class Servo:
     """
@@ -428,7 +429,7 @@ class Servo:
         """This servo's bus address."""
         return self._id
 
-    # ── CONTROL (0x01) ───────────────────────────────────────────────────
+    # CONTROL (0x01) command
 
     def move(self, angle, velocity=0, current=0):
         """
@@ -453,7 +454,7 @@ class Servo:
         self._bus._transact(pkt, expect_reply=False)
         return None
 
-    # ── POLL_STATUS (0x03) ───────────────────────────────────────────────
+    # POLL_STATUS (0x03) command
 
     def poll(self):
         """
@@ -467,7 +468,7 @@ class Servo:
         pkt = _build_packet(self._id, _INST_POLL)
         return self._bus._transact(pkt, expect_reply=True)
 
-    # ── CLEAR_ERROR (0x04) ───────────────────────────────────────────────
+    # CLEAR_ERROR (0x04) command
 
     def clear_error(self):
         """
@@ -489,7 +490,7 @@ class Servo:
         """
         return self.clear_error()
 
-    # ── READ_CONFIG (0x05) ───────────────────────────────────────────────
+    # READ_CONFIG (0x05) command
 
     def read_config(self):
         """
@@ -504,7 +505,7 @@ class Servo:
         return self._bus._transact(pkt, expect_reply=True, expected_len=_CONFIG_REPLY_LEN)
 
 
-    # ── CONFIG (0x02) — Granular Setters ─────────────────────────────────
+    # CONFIG (0x02) — Granular Setters
     #    Each setter only sets its own update_mask bit.  All 25 parameter bytes
     # are always sent (fixed-length packet), with zeros in the unused slots.
     # The firmware only reads the fields whose mask bits are set.
@@ -722,7 +723,7 @@ class Servo:
 
         return self._send_config(mask, bytes(p))
 
-    # ── Convenience ──────────────────────────────────────────────────────
+    # Convenience functions
 
     def is_moving(self):
         """Poll and return True if the servo reports it is still moving."""
