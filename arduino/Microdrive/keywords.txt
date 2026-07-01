@@ -1,0 +1,37 @@
+# Syntax Coloring Map for Microdrive Library
+
+# ─── Classes (KEYWORD1) ─────────────────────────────────────────────────────
+ServoBus	KEYWORD1
+Servo	KEYWORD1
+ServoStatus	KEYWORD1
+ServoConfigData	KEYWORD1
+
+# ─── Methods (KEYWORD2) ─────────────────────────────────────────────────────
+servo	KEYWORD2
+move	KEYWORD2
+poll	KEYWORD2
+clearError	KEYWORD2
+disarm	KEYWORD2
+readConfig	KEYWORD2
+setId	KEYWORD2
+setAngleLimits	KEYWORD2
+setVelocity	KEYWORD2
+setCurrentLimit	KEYWORD2
+setPid	KEYWORD2
+setCalibration	KEYWORD2
+configure	KEYWORD2
+isMoving	KEYWORD2
+waitUntilDone	KEYWORD2
+moveAndWait	KEYWORD2
+broadcastMove	KEYWORD2
+broadcastClearError	KEYWORD2
+broadcastDisarm	KEYWORD2
+scan	KEYWORD2
+hasFault	KEYWORD2
+id	KEYWORD2
+
+# ─── Constants (LITERAL1) ───────────────────────────────────────────────────
+MICRODRIVE_BROADCAST_ID	LITERAL1
+MICRODRIVE_STATUS_REPLY_LEN	LITERAL1
+MICRODRIVE_CONFIG_REPLY_LEN	LITERAL1
+MICRODRIVE_DEFAULT_TIMEOUT_MS	LITERAL1
